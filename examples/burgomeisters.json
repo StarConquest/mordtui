@@ -1,0 +1,2366 @@
+{
+  "campaigns": [
+    {
+      "id": "example-campaign",
+      "name": "Mordheim 2026",
+      "notes": "Imported from reikland_concept.xlsx"
+    }
+  ],
+  "warbands": [
+    {
+      "id": "example-warband",
+      "campaign_id": "example-campaign",
+      "profile_id": "burgomeisters",
+      "name": "Burgeoning Burgomeisters",
+      "leader_id": "hans"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "burgomeisters",
+      "schema_version": 1,
+      "version": "1.0",
+      "name": "Burgeoning Burgomeisters house profile",
+      "faction": "Reikland",
+      "source": "https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf",
+      "classification": "house",
+      "starting_gold": 700,
+      "bonus_gold": 0,
+      "max_members": 15,
+      "max_heroes": 6,
+      "allow_debt": false,
+      "initial_advance_cost": 15
+    }
+  ],
+  "types": [
+    {
+      "id": "burgomeisters-captain",
+      "profile_id": "burgomeisters",
+      "name": "Captain",
+      "role": "hero",
+      "cost": 60,
+      "upkeep": 0,
+      "starting_xp": 20,
+      "gains_xp": true,
+      "limit": 1,
+      "group_max": 1,
+      "rating": 5,
+      "counts_roster": true,
+      "counts_income": true,
+      "counts_battle": true,
+      "m": "4",
+      "ws": "4",
+      "bs": "4",
+      "s": "3",
+      "t": "3",
+      "w": "1",
+      "i": "4",
+      "a": "1",
+      "ld": "8"
+    },
+    {
+      "id": "burgomeisters-champion",
+      "profile_id": "burgomeisters",
+      "name": "Champion",
+      "role": "hero",
+      "cost": 35,
+      "upkeep": 0,
+      "starting_xp": 8,
+      "gains_xp": true,
+      "limit": 2,
+      "group_max": 1,
+      "rating": 5,
+      "counts_roster": true,
+      "counts_income": true,
+      "counts_battle": true,
+      "m": "4",
+      "ws": "4",
+      "bs": "3",
+      "s": "3",
+      "t": "3",
+      "w": "1",
+      "i": "3",
+      "a": "1",
+      "ld": "7"
+    },
+    {
+      "id": "burgomeisters-youngblood",
+      "profile_id": "burgomeisters",
+      "name": "Youngblood",
+      "role": "hero",
+      "cost": 15,
+      "upkeep": 0,
+      "starting_xp": 0,
+      "gains_xp": true,
+      "limit": 2,
+      "group_max": 1,
+      "rating": 5,
+      "counts_roster": true,
+      "counts_income": true,
+      "counts_battle": true,
+      "m": "4",
+      "ws": "2",
+      "bs": "2",
+      "s": "3",
+      "t": "3",
+      "w": "1",
+      "i": "3",
+      "a": "1",
+      "ld": "6"
+    },
+    {
+      "id": "burgomeisters-marksmen",
+      "profile_id": "burgomeisters",
+      "name": "Marksmen",
+      "role": "henchman",
+      "cost": 25,
+      "upkeep": 0,
+      "starting_xp": 0,
+      "gains_xp": true,
+      "limit": 7,
+      "group_max": 5,
+      "rating": 5,
+      "counts_roster": true,
+      "counts_income": true,
+      "counts_battle": true,
+      "m": "4",
+      "ws": "3",
+      "bs": "4",
+      "s": "3",
+      "t": "3",
+      "w": "1",
+      "i": "3",
+      "a": "1",
+      "ld": "7"
+    },
+    {
+      "id": "burgomeisters-swordsmen",
+      "profile_id": "burgomeisters",
+      "name": "Swordsmen",
+      "role": "henchman",
+      "cost": 35,
+      "upkeep": 0,
+      "starting_xp": 0,
+      "gains_xp": true,
+      "limit": 5,
+      "group_max": 5,
+      "rating": 5,
+      "counts_roster": true,
+      "counts_income": true,
+      "counts_battle": true,
+      "m": "4",
+      "ws": "4",
+      "bs": "3",
+      "s": "3",
+      "t": "3",
+      "w": "1",
+      "i": "3",
+      "a": "1",
+      "ld": "7"
+    },
+    {
+      "id": "burgomeisters-warrior",
+      "profile_id": "burgomeisters",
+      "name": "Warrior",
+      "role": "henchman",
+      "cost": 25,
+      "upkeep": 0,
+      "starting_xp": 0,
+      "gains_xp": true,
+      "limit": 0,
+      "group_max": 5,
+      "rating": 5,
+      "counts_roster": true,
+      "counts_income": true,
+      "counts_battle": true,
+      "m": "4",
+      "ws": "3",
+      "bs": "3",
+      "s": "3",
+      "t": "3",
+      "w": "1",
+      "i": "3",
+      "a": "1",
+      "ld": "7"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard",
+      "profile_id": "burgomeisters",
+      "name": "Ogre Bodyguard",
+      "role": "hired",
+      "cost": 80,
+      "upkeep": 30,
+      "starting_xp": 0,
+      "gains_xp": true,
+      "limit": 1,
+      "group_max": 1,
+      "rating": 25,
+      "counts_roster": false,
+      "counts_income": false,
+      "counts_battle": true,
+      "m": "6",
+      "ws": "3",
+      "bs": "2",
+      "s": "4",
+      "t": "4",
+      "w": "3",
+      "i": "3",
+      "a": "2",
+      "ld": "7"
+    }
+  ],
+  "items": [
+    {
+      "id": "burgomeisters-dagger",
+      "profile_id": "burgomeisters",
+      "name": "Dagger",
+      "cost": 2,
+      "category": "melee",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-hammer",
+      "profile_id": "burgomeisters",
+      "name": "Hammer",
+      "cost": 3,
+      "category": "melee",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-sword",
+      "profile_id": "burgomeisters",
+      "name": "Sword",
+      "cost": 10,
+      "category": "melee",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-bow",
+      "profile_id": "burgomeisters",
+      "name": "Bow",
+      "cost": 10,
+      "category": "missile",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-long-bow",
+      "profile_id": "burgomeisters",
+      "name": "Long Bow",
+      "cost": 15,
+      "category": "missile",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-crossbow",
+      "profile_id": "burgomeisters",
+      "name": "Crossbow",
+      "cost": 25,
+      "category": "missile",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-shield",
+      "profile_id": "burgomeisters",
+      "name": "Shield",
+      "cost": 5,
+      "category": "shield",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-light-armour",
+      "profile_id": "burgomeisters",
+      "name": "Light Armour",
+      "cost": 20,
+      "category": "armour",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-wyrdstone",
+      "profile_id": "burgomeisters",
+      "name": "Wyrdstone",
+      "cost": 0,
+      "category": "resource",
+      "rarity": 0,
+      "description": "Manual effect; see pinned rulebook."
+    },
+    {
+      "id": "burgomeisters-lucky-charm",
+      "profile_id": "burgomeisters",
+      "name": "Lucky Charm",
+      "cost": 10,
+      "category": "special",
+      "rarity": 6,
+      "description": "Manual effect; see pinned rulebook."
+    }
+  ],
+  "permissions": [
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-dagger",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-dagger",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-hammer",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-hammer",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-sword",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-sword",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-bow",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-long-bow",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-long-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-crossbow",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-crossbow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-shield",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-shield",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-light-armour",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-light-armour",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-lucky-charm",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-lucky-charm",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-leader",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-leader",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-expert-swordsman",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-expert-swordsman",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-mighty-blow",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-mighty-blow",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-quick-shot",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-quick-shot",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-weapons-expert",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-weapons-expert",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-captain-perm-burgomeisters-lesser-magic",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-lesser-magic",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-dagger",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-dagger",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-hammer",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-hammer",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-sword",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-sword",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-bow",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-long-bow",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-long-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-crossbow",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-crossbow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-shield",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-shield",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-light-armour",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-light-armour",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-lucky-charm",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-lucky-charm",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-leader",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-leader",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-expert-swordsman",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-expert-swordsman",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-mighty-blow",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-mighty-blow",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-quick-shot",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-quick-shot",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-weapons-expert",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-weapons-expert",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-champion-perm-burgomeisters-lesser-magic",
+      "type_id": "burgomeisters-champion",
+      "target_id": "burgomeisters-lesser-magic",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-dagger",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-dagger",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-hammer",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-hammer",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-sword",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-sword",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-bow",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-long-bow",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-long-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-crossbow",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-crossbow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-shield",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-shield",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-light-armour",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-light-armour",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-lucky-charm",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-lucky-charm",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-leader",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-leader",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-expert-swordsman",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-expert-swordsman",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-mighty-blow",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-mighty-blow",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-quick-shot",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-quick-shot",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-weapons-expert",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-weapons-expert",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-youngblood-perm-burgomeisters-lesser-magic",
+      "type_id": "burgomeisters-youngblood",
+      "target_id": "burgomeisters-lesser-magic",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-dagger",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-dagger",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-hammer",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-hammer",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-sword",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-sword",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-bow",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-long-bow",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-long-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-crossbow",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-crossbow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-shield",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-shield",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-marksmen-perm-burgomeisters-light-armour",
+      "type_id": "burgomeisters-marksmen",
+      "target_id": "burgomeisters-light-armour",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-swordsmen-perm-burgomeisters-dagger",
+      "type_id": "burgomeisters-swordsmen",
+      "target_id": "burgomeisters-dagger",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-swordsmen-perm-burgomeisters-hammer",
+      "type_id": "burgomeisters-swordsmen",
+      "target_id": "burgomeisters-hammer",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-swordsmen-perm-burgomeisters-sword",
+      "type_id": "burgomeisters-swordsmen",
+      "target_id": "burgomeisters-sword",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-swordsmen-perm-burgomeisters-shield",
+      "type_id": "burgomeisters-swordsmen",
+      "target_id": "burgomeisters-shield",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-swordsmen-perm-burgomeisters-light-armour",
+      "type_id": "burgomeisters-swordsmen",
+      "target_id": "burgomeisters-light-armour",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-dagger",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-dagger",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-hammer",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-hammer",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-sword",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-sword",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-bow",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-long-bow",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-long-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-crossbow",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-crossbow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-shield",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-shield",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-warrior-perm-burgomeisters-light-armour",
+      "type_id": "burgomeisters-warrior",
+      "target_id": "burgomeisters-light-armour",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-dagger",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-dagger",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-hammer",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-hammer",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-sword",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-sword",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-bow",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-long-bow",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-long-bow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-crossbow",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-crossbow",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-shield",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-shield",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-light-armour",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-light-armour",
+      "kind": "item"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-leader",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-leader",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-expert-swordsman",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-expert-swordsman",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-mighty-blow",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-mighty-blow",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-quick-shot",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-quick-shot",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-weapons-expert",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-weapons-expert",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-perm-burgomeisters-lesser-magic",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "target_id": "burgomeisters-lesser-magic",
+      "kind": "ability"
+    },
+    {
+      "id": "burgomeisters-captain-innate",
+      "type_id": "burgomeisters-captain",
+      "target_id": "burgomeisters-leader",
+      "kind": "starting-ability"
+    },
+    {
+      "id": "burgomeisters-swordsmen-innate",
+      "type_id": "burgomeisters-swordsmen",
+      "target_id": "burgomeisters-expert-swordsman",
+      "kind": "starting-ability"
+    },
+    {
+      "id": "burgomeisters-swordsmen-house-bow",
+      "type_id": "burgomeisters-swordsmen",
+      "target_id": "burgomeisters-bow",
+      "kind": "item"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "burgomeisters-leader",
+      "profile_id": "burgomeisters",
+      "name": "Leader",
+      "kind": "special",
+      "description": "Leadership aura; Reikland captain uses faction-specific range.",
+      "source": "https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf"
+    },
+    {
+      "id": "burgomeisters-expert-swordsman",
+      "profile_id": "burgomeisters",
+      "name": "Expert Swordsman",
+      "kind": "special",
+      "description": "Swordsmen reroll failed hits when charging with permitted swords.",
+      "source": "https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf"
+    },
+    {
+      "id": "burgomeisters-mighty-blow",
+      "profile_id": "burgomeisters",
+      "name": "Mighty Blow",
+      "kind": "strength",
+      "description": "+1 Strength in close combat; contextual, record effect.",
+      "source": "https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf"
+    },
+    {
+      "id": "burgomeisters-quick-shot",
+      "profile_id": "burgomeisters",
+      "name": "Quick Shot",
+      "kind": "shooting",
+      "description": "Two shots with eligible bows/crossbows; see errata.",
+      "source": "https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf"
+    },
+    {
+      "id": "burgomeisters-weapons-expert",
+      "profile_id": "burgomeisters",
+      "name": "Weapons Expert",
+      "kind": "shooting",
+      "description": "Additional missile weapon eligibility; explicitly override equipment permissions with reason.",
+      "source": "https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf"
+    },
+    {
+      "id": "burgomeisters-lesser-magic",
+      "profile_id": "burgomeisters",
+      "name": "Lesser Magic",
+      "kind": "spell",
+      "description": "Record selected spell and difficulty in notes.",
+      "source": "https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf"
+    }
+  ],
+  "caps": [
+    {
+      "id": "burgomeisters-captain-cap-M",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "M",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-captain-cap-WS",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "WS",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-captain-cap-BS",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "BS",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-captain-cap-S",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "S",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-captain-cap-T",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "T",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-captain-cap-W",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "W",
+      "maximum": 3
+    },
+    {
+      "id": "burgomeisters-captain-cap-I",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "I",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-captain-cap-A",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "A",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-captain-cap-Ld",
+      "type_id": "burgomeisters-captain",
+      "characteristic": "Ld",
+      "maximum": 9
+    },
+    {
+      "id": "burgomeisters-champion-cap-M",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "M",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-champion-cap-WS",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "WS",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-champion-cap-BS",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "BS",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-champion-cap-S",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "S",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-champion-cap-T",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "T",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-champion-cap-W",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "W",
+      "maximum": 3
+    },
+    {
+      "id": "burgomeisters-champion-cap-I",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "I",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-champion-cap-A",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "A",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-champion-cap-Ld",
+      "type_id": "burgomeisters-champion",
+      "characteristic": "Ld",
+      "maximum": 9
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-M",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "M",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-WS",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "WS",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-BS",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "BS",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-S",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "S",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-T",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "T",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-W",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "W",
+      "maximum": 3
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-I",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "I",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-A",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "A",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-youngblood-cap-Ld",
+      "type_id": "burgomeisters-youngblood",
+      "characteristic": "Ld",
+      "maximum": 9
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-M",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "M",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-WS",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "WS",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-BS",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "BS",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-S",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "S",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-T",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "T",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-W",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "W",
+      "maximum": 3
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-I",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "I",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-A",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "A",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-marksmen-cap-Ld",
+      "type_id": "burgomeisters-marksmen",
+      "characteristic": "Ld",
+      "maximum": 9
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-M",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "M",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-WS",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "WS",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-BS",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "BS",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-S",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "S",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-T",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "T",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-W",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "W",
+      "maximum": 3
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-I",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "I",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-A",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "A",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-swordsmen-cap-Ld",
+      "type_id": "burgomeisters-swordsmen",
+      "characteristic": "Ld",
+      "maximum": 9
+    },
+    {
+      "id": "burgomeisters-warrior-cap-M",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "M",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-warrior-cap-WS",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "WS",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-warrior-cap-BS",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "BS",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-warrior-cap-S",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "S",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-warrior-cap-T",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "T",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-warrior-cap-W",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "W",
+      "maximum": 3
+    },
+    {
+      "id": "burgomeisters-warrior-cap-I",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "I",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-warrior-cap-A",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "A",
+      "maximum": 4
+    },
+    {
+      "id": "burgomeisters-warrior-cap-Ld",
+      "type_id": "burgomeisters-warrior",
+      "characteristic": "Ld",
+      "maximum": 9
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-M",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "M",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-WS",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "WS",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-BS",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "BS",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-S",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "S",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-T",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "T",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-W",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "W",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-I",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "I",
+      "maximum": 6
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-A",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "A",
+      "maximum": 5
+    },
+    {
+      "id": "burgomeisters-ogre-bodyguard-cap-Ld",
+      "type_id": "burgomeisters-ogre-bodyguard",
+      "characteristic": "Ld",
+      "maximum": 9
+    }
+  ],
+  "thresholds": [
+    {
+      "id": "burgomeisters-xp-hero-2",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 2
+    },
+    {
+      "id": "burgomeisters-xp-hero-4",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 4
+    },
+    {
+      "id": "burgomeisters-xp-hero-6",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 6
+    },
+    {
+      "id": "burgomeisters-xp-hero-8",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 8
+    },
+    {
+      "id": "burgomeisters-xp-hero-11",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 11
+    },
+    {
+      "id": "burgomeisters-xp-hero-14",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 14
+    },
+    {
+      "id": "burgomeisters-xp-hero-17",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 17
+    },
+    {
+      "id": "burgomeisters-xp-hero-20",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 20
+    },
+    {
+      "id": "burgomeisters-xp-hero-24",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 24
+    },
+    {
+      "id": "burgomeisters-xp-hero-28",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 28
+    },
+    {
+      "id": "burgomeisters-xp-hero-32",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 32
+    },
+    {
+      "id": "burgomeisters-xp-hero-36",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 36
+    },
+    {
+      "id": "burgomeisters-xp-hero-41",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 41
+    },
+    {
+      "id": "burgomeisters-xp-hero-46",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 46
+    },
+    {
+      "id": "burgomeisters-xp-hero-51",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 51
+    },
+    {
+      "id": "burgomeisters-xp-hero-56",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 56
+    },
+    {
+      "id": "burgomeisters-xp-hero-62",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 62
+    },
+    {
+      "id": "burgomeisters-xp-hero-68",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 68
+    },
+    {
+      "id": "burgomeisters-xp-hero-74",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 74
+    },
+    {
+      "id": "burgomeisters-xp-hero-80",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 80
+    },
+    {
+      "id": "burgomeisters-xp-hero-87",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 87
+    },
+    {
+      "id": "burgomeisters-xp-hero-94",
+      "profile_id": "burgomeisters",
+      "role": "hero",
+      "xp": 94
+    },
+    {
+      "id": "burgomeisters-xp-henchman-2",
+      "profile_id": "burgomeisters",
+      "role": "henchman",
+      "xp": 2
+    },
+    {
+      "id": "burgomeisters-xp-henchman-5",
+      "profile_id": "burgomeisters",
+      "role": "henchman",
+      "xp": 5
+    },
+    {
+      "id": "burgomeisters-xp-henchman-9",
+      "profile_id": "burgomeisters",
+      "role": "henchman",
+      "xp": 9
+    },
+    {
+      "id": "burgomeisters-xp-henchman-14",
+      "profile_id": "burgomeisters",
+      "role": "henchman",
+      "xp": 14
+    },
+    {
+      "id": "burgomeisters-xp-hired-2",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 2
+    },
+    {
+      "id": "burgomeisters-xp-hired-4",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 4
+    },
+    {
+      "id": "burgomeisters-xp-hired-6",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 6
+    },
+    {
+      "id": "burgomeisters-xp-hired-8",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 8
+    },
+    {
+      "id": "burgomeisters-xp-hired-11",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 11
+    },
+    {
+      "id": "burgomeisters-xp-hired-14",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 14
+    },
+    {
+      "id": "burgomeisters-xp-hired-17",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 17
+    },
+    {
+      "id": "burgomeisters-xp-hired-20",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 20
+    },
+    {
+      "id": "burgomeisters-xp-hired-24",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 24
+    },
+    {
+      "id": "burgomeisters-xp-hired-28",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 28
+    },
+    {
+      "id": "burgomeisters-xp-hired-32",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 32
+    },
+    {
+      "id": "burgomeisters-xp-hired-36",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 36
+    },
+    {
+      "id": "burgomeisters-xp-hired-41",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 41
+    },
+    {
+      "id": "burgomeisters-xp-hired-46",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 46
+    },
+    {
+      "id": "burgomeisters-xp-hired-51",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 51
+    },
+    {
+      "id": "burgomeisters-xp-hired-56",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 56
+    },
+    {
+      "id": "burgomeisters-xp-hired-62",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 62
+    },
+    {
+      "id": "burgomeisters-xp-hired-68",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 68
+    },
+    {
+      "id": "burgomeisters-xp-hired-74",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 74
+    },
+    {
+      "id": "burgomeisters-xp-hired-80",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 80
+    },
+    {
+      "id": "burgomeisters-xp-hired-87",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 87
+    },
+    {
+      "id": "burgomeisters-xp-hired-94",
+      "profile_id": "burgomeisters",
+      "role": "hired",
+      "xp": 94
+    }
+  ],
+  "units": [
+    {
+      "id": "hans-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-captain",
+      "name": "Hans",
+      "role": "hero",
+      "starting_xp": 28,
+      "earned_xp": 0
+    },
+    {
+      "id": "champion-one-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-champion",
+      "name": "Champion One",
+      "role": "hero",
+      "starting_xp": 14,
+      "earned_xp": 0
+    },
+    {
+      "id": "champion-two-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-champion",
+      "name": "Champion Two",
+      "role": "hero",
+      "starting_xp": 14,
+      "earned_xp": 0
+    },
+    {
+      "id": "youngblood-one-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-youngblood",
+      "name": "Youngblood One",
+      "role": "hero",
+      "starting_xp": 4,
+      "earned_xp": 0
+    },
+    {
+      "id": "youngblood-two-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-youngblood",
+      "name": "Youngblood Two",
+      "role": "hero",
+      "starting_xp": 2,
+      "earned_xp": 0
+    },
+    {
+      "id": "arrows-one-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-marksmen",
+      "name": "1st Arrows",
+      "role": "henchman",
+      "starting_xp": 0,
+      "earned_xp": 0
+    },
+    {
+      "id": "arrows-two-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-marksmen",
+      "name": "2nd Arrows",
+      "role": "henchman",
+      "starting_xp": 0,
+      "earned_xp": 0
+    },
+    {
+      "id": "arrows-three-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-marksmen",
+      "name": "3rd Arrows",
+      "role": "henchman",
+      "starting_xp": 0,
+      "earned_xp": 0
+    },
+    {
+      "id": "swordsmen-unit",
+      "warband_id": "example-warband",
+      "type_id": "burgomeisters-swordsmen",
+      "name": "Swordsmen",
+      "role": "henchman",
+      "starting_xp": 0,
+      "earned_xp": 0
+    }
+  ],
+  "members": [
+    {
+      "id": "hans",
+      "unit_id": "hans-unit",
+      "name": "Hans",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "champion-one",
+      "unit_id": "champion-one-unit",
+      "name": "Champion One",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "champion-two",
+      "unit_id": "champion-two-unit",
+      "name": "Champion Two",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "youngblood-one",
+      "unit_id": "youngblood-one-unit",
+      "name": "Youngblood One",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "youngblood-two",
+      "unit_id": "youngblood-two-unit",
+      "name": "Youngblood Two",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "arrows-one-1",
+      "unit_id": "arrows-one-unit",
+      "name": "1st Arrows 1",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "arrows-one-2",
+      "unit_id": "arrows-one-unit",
+      "name": "1st Arrows 2",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "arrows-two-1",
+      "unit_id": "arrows-two-unit",
+      "name": "2nd Arrows 1",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "arrows-two-2",
+      "unit_id": "arrows-two-unit",
+      "name": "2nd Arrows 2",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "arrows-three-1",
+      "unit_id": "arrows-three-unit",
+      "name": "3rd Arrows 1",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "arrows-three-2",
+      "unit_id": "arrows-three-unit",
+      "name": "3rd Arrows 2",
+      "status": "active",
+      "missed_games": 0
+    },
+    {
+      "id": "swordsmen",
+      "unit_id": "swordsmen-unit",
+      "name": "Swordsmen",
+      "status": "active",
+      "missed_games": 0
+    }
+  ],
+  "advances": [
+    {
+      "id": "hans-initial-W",
+      "unit_id": "hans-unit",
+      "threshold": 0,
+      "characteristic": "W",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "hans-initial-BS",
+      "unit_id": "hans-unit",
+      "threshold": 0,
+      "characteristic": "BS",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "champion-one-initial-W",
+      "unit_id": "champion-one-unit",
+      "threshold": 0,
+      "characteristic": "W",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "champion-one-initial-BS",
+      "unit_id": "champion-one-unit",
+      "threshold": 0,
+      "characteristic": "BS",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "champion-two-initial-W",
+      "unit_id": "champion-two-unit",
+      "threshold": 0,
+      "characteristic": "W",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "champion-two-initial-BS",
+      "unit_id": "champion-two-unit",
+      "threshold": 0,
+      "characteristic": "BS",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "youngblood-one-initial-W",
+      "unit_id": "youngblood-one-unit",
+      "threshold": 0,
+      "characteristic": "W",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "youngblood-one-initial-BS",
+      "unit_id": "youngblood-one-unit",
+      "threshold": 0,
+      "characteristic": "BS",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "youngblood-two-initial-BS",
+      "unit_id": "youngblood-two-unit",
+      "threshold": 0,
+      "characteristic": "BS",
+      "delta": 1,
+      "ability_id": "",
+      "dice_id": "",
+      "reason": "Workbook existing advance; original date/roll unknown"
+    },
+    {
+      "id": "hans-unit-innate",
+      "unit_id": "hans-unit",
+      "threshold": 0,
+      "characteristic": "",
+      "delta": 0,
+      "ability_id": "burgomeisters-leader",
+      "dice_id": "",
+      "reason": "Workbook starting ability"
+    },
+    {
+      "id": "swordsmen-unit-innate",
+      "unit_id": "swordsmen-unit",
+      "threshold": 0,
+      "characteristic": "",
+      "delta": 0,
+      "ability_id": "burgomeisters-expert-swordsman",
+      "dice_id": "",
+      "reason": "Workbook starting ability"
+    }
+  ],
+  "effects": [],
+  "holdings": [
+    {
+      "id": "owned-crossbow",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-crossbow",
+      "quantity": 3
+    },
+    {
+      "id": "owned-long-bow",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-long-bow",
+      "quantity": 6
+    },
+    {
+      "id": "owned-bow",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-bow",
+      "quantity": 3
+    },
+    {
+      "id": "owned-shield",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-shield",
+      "quantity": 8
+    },
+    {
+      "id": "owned-dagger",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 12
+    },
+    {
+      "id": "owned-hammer",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 11
+    },
+    {
+      "id": "owned-sword",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-sword",
+      "quantity": 1
+    },
+    {
+      "id": "owned-wyrdstone",
+      "warband_id": "example-warband",
+      "item_id": "burgomeisters-wyrdstone",
+      "quantity": 0
+    }
+  ],
+  "allocations": [
+    {
+      "id": "hans-hammer",
+      "member_id": "hans",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "hans-crossbow",
+      "member_id": "hans",
+      "item_id": "burgomeisters-crossbow",
+      "quantity": 1
+    },
+    {
+      "id": "hans-shield",
+      "member_id": "hans",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "hans-dagger",
+      "member_id": "hans",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "champion-one-hammer",
+      "member_id": "champion-one",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "champion-one-crossbow",
+      "member_id": "champion-one",
+      "item_id": "burgomeisters-crossbow",
+      "quantity": 1
+    },
+    {
+      "id": "champion-one-shield",
+      "member_id": "champion-one",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "champion-one-dagger",
+      "member_id": "champion-one",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "champion-two-hammer",
+      "member_id": "champion-two",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "champion-two-crossbow",
+      "member_id": "champion-two",
+      "item_id": "burgomeisters-crossbow",
+      "quantity": 1
+    },
+    {
+      "id": "champion-two-shield",
+      "member_id": "champion-two",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "champion-two-dagger",
+      "member_id": "champion-two",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "youngblood-one-hammer",
+      "member_id": "youngblood-one",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "youngblood-one-bow",
+      "member_id": "youngblood-one",
+      "item_id": "burgomeisters-bow",
+      "quantity": 1
+    },
+    {
+      "id": "youngblood-one-dagger",
+      "member_id": "youngblood-one",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "youngblood-two-hammer",
+      "member_id": "youngblood-two",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "youngblood-two-bow",
+      "member_id": "youngblood-two",
+      "item_id": "burgomeisters-bow",
+      "quantity": 1
+    },
+    {
+      "id": "youngblood-two-dagger",
+      "member_id": "youngblood-two",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-1-hammer",
+      "member_id": "arrows-one-1",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-1-long-bow",
+      "member_id": "arrows-one-1",
+      "item_id": "burgomeisters-long-bow",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-1-shield",
+      "member_id": "arrows-one-1",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-1-dagger",
+      "member_id": "arrows-one-1",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-2-hammer",
+      "member_id": "arrows-one-2",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-2-long-bow",
+      "member_id": "arrows-one-2",
+      "item_id": "burgomeisters-long-bow",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-2-shield",
+      "member_id": "arrows-one-2",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-one-2-dagger",
+      "member_id": "arrows-one-2",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-1-hammer",
+      "member_id": "arrows-two-1",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-1-long-bow",
+      "member_id": "arrows-two-1",
+      "item_id": "burgomeisters-long-bow",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-1-shield",
+      "member_id": "arrows-two-1",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-1-dagger",
+      "member_id": "arrows-two-1",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-2-hammer",
+      "member_id": "arrows-two-2",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-2-long-bow",
+      "member_id": "arrows-two-2",
+      "item_id": "burgomeisters-long-bow",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-2-shield",
+      "member_id": "arrows-two-2",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-two-2-dagger",
+      "member_id": "arrows-two-2",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-three-1-hammer",
+      "member_id": "arrows-three-1",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-three-1-long-bow",
+      "member_id": "arrows-three-1",
+      "item_id": "burgomeisters-long-bow",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-three-1-dagger",
+      "member_id": "arrows-three-1",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-three-2-hammer",
+      "member_id": "arrows-three-2",
+      "item_id": "burgomeisters-hammer",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-three-2-long-bow",
+      "member_id": "arrows-three-2",
+      "item_id": "burgomeisters-long-bow",
+      "quantity": 1
+    },
+    {
+      "id": "arrows-three-2-dagger",
+      "member_id": "arrows-three-2",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    },
+    {
+      "id": "swordsmen-sword",
+      "member_id": "swordsmen",
+      "item_id": "burgomeisters-sword",
+      "quantity": 1
+    },
+    {
+      "id": "swordsmen-bow",
+      "member_id": "swordsmen",
+      "item_id": "burgomeisters-bow",
+      "quantity": 1
+    },
+    {
+      "id": "swordsmen-shield",
+      "member_id": "swordsmen",
+      "item_id": "burgomeisters-shield",
+      "quantity": 1
+    },
+    {
+      "id": "swordsmen-dagger",
+      "member_id": "swordsmen",
+      "item_id": "burgomeisters-dagger",
+      "quantity": 1
+    }
+  ],
+  "ledger": [
+    {
+      "id": "opening-ledger-0",
+      "warband_id": "example-warband",
+      "category": "funding",
+      "item_id": "",
+      "member_id": "",
+      "quantity": 1,
+      "unit_price": 700,
+      "gold": 700,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 2; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-1",
+      "warband_id": "example-warband",
+      "category": "hire",
+      "item_id": "",
+      "member_id": "",
+      "quantity": 1,
+      "unit_price": 60,
+      "gold": -60,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 3; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-2",
+      "warband_id": "example-warband",
+      "category": "hire",
+      "item_id": "",
+      "member_id": "",
+      "quantity": 2,
+      "unit_price": 35,
+      "gold": -70,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 4; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-3",
+      "warband_id": "example-warband",
+      "category": "hire",
+      "item_id": "",
+      "member_id": "",
+      "quantity": 2,
+      "unit_price": 15,
+      "gold": -30,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 5; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-4",
+      "warband_id": "example-warband",
+      "category": "hire",
+      "item_id": "",
+      "member_id": "",
+      "quantity": 6,
+      "unit_price": 25,
+      "gold": -150,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 6; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-5",
+      "warband_id": "example-warband",
+      "category": "purchase",
+      "item_id": "burgomeisters-crossbow",
+      "member_id": "",
+      "quantity": 3,
+      "unit_price": 25,
+      "gold": -75,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 7; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-6",
+      "warband_id": "example-warband",
+      "category": "purchase",
+      "item_id": "burgomeisters-bow",
+      "member_id": "",
+      "quantity": 3,
+      "unit_price": 10,
+      "gold": -30,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 8; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-7",
+      "warband_id": "example-warband",
+      "category": "purchase",
+      "item_id": "burgomeisters-long-bow",
+      "member_id": "",
+      "quantity": 6,
+      "unit_price": 15,
+      "gold": -90,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 9; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-8",
+      "warband_id": "example-warband",
+      "category": "purchase",
+      "item_id": "burgomeisters-shield",
+      "member_id": "",
+      "quantity": 8,
+      "unit_price": 5,
+      "gold": -40,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 10; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-9",
+      "warband_id": "example-warband",
+      "category": "purchase",
+      "item_id": "burgomeisters-hammer",
+      "member_id": "",
+      "quantity": 11,
+      "unit_price": 3,
+      "gold": -33,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 11; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-10",
+      "warband_id": "example-warband",
+      "category": "initial-advance",
+      "item_id": "",
+      "member_id": "",
+      "quantity": 5,
+      "unit_price": 15,
+      "gold": -75,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 12; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-11",
+      "warband_id": "example-warband",
+      "category": "hire",
+      "item_id": "",
+      "member_id": "",
+      "quantity": 1,
+      "unit_price": 35,
+      "gold": -35,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 13; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-12",
+      "warband_id": "example-warband",
+      "category": "find",
+      "item_id": "burgomeisters-dagger",
+      "member_id": "",
+      "quantity": 12,
+      "unit_price": 0,
+      "gold": 0,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 14; date label Initial / unknown"
+    },
+    {
+      "id": "opening-ledger-13",
+      "warband_id": "example-warband",
+      "category": "purchase",
+      "item_id": "burgomeisters-sword",
+      "member_id": "",
+      "quantity": 1,
+      "unit_price": 10,
+      "gold": -10,
+      "date": "",
+      "battle_id": "",
+      "phase": "setup",
+      "notes": "Ledger row 15; date label Initial / unknown"
+    }
+  ],
+  "notes": [
+    {
+      "id": "opening-note-0",
+      "entity_id": "example-warband",
+      "text": "Faction confirmed Reikland by owner; workbook Marienburg label was erroneous.",
+      "date": ""
+    },
+    {
+      "id": "opening-note-1",
+      "entity_id": "example-warband",
+      "text": "Initial funding 700 and five purchased plus-ups at 15 retained as workbook house settings.",
+      "date": ""
+    },
+    {
+      "id": "opening-note-2",
+      "entity_id": "example-warband",
+      "text": "1 Search Left / 12 Oct: historical campaign note, no active allowance.",
+      "date": ""
+    },
+    {
+      "id": "opening-note-3",
+      "entity_id": "example-warband",
+      "text": "Unrecorded original dates and rolls remain unknown. Existing XP recorded as opening balances.",
+      "date": ""
+    },
+    {
+      "id": "opening-note-4",
+      "entity_id": "example-warband",
+      "text": "Inventory and rating reconciled: 12 members, 122 rating, 2 gold, 0 wyrdstone.",
+      "date": ""
+    },
+    {
+      "id": "opening-note-5",
+      "entity_id": "example-warband",
+      "text": "Workbook maps: Summary\u2192warbands; Heroes/Henchmen\u2192units,members,advances,allocations; Ledger\u2192ledger; Inventory\u2192holdings; Base_Stats\u2192types; Sheet8\u2192notes.",
+      "date": ""
+    }
+  ],
+  "battles": [],
+  "participants": [],
+  "steps": [],
+  "searches": [],
+  "resolutions": [],
+  "dice": [],
+  "snapshots": [],
+  "events": []
+}

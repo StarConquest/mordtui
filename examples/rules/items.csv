@@ -1,0 +1,41 @@
+id,profile_id,name,cost,category,rarity,description
+mercenaries-dagger,mercenaries,Dagger,2,melee,0,Manual effect; see pinned rulebook.
+mercenaries-hammer,mercenaries,Hammer,3,melee,0,Manual effect; see pinned rulebook.
+mercenaries-sword,mercenaries,Sword,10,melee,0,Manual effect; see pinned rulebook.
+mercenaries-bow,mercenaries,Bow,10,missile,0,Manual effect; see pinned rulebook.
+mercenaries-long-bow,mercenaries,Long Bow,15,missile,0,Manual effect; see pinned rulebook.
+mercenaries-crossbow,mercenaries,Crossbow,25,missile,0,Manual effect; see pinned rulebook.
+mercenaries-shield,mercenaries,Shield,5,shield,0,Manual effect; see pinned rulebook.
+mercenaries-light-armour,mercenaries,Light Armour,20,armour,0,Manual effect; see pinned rulebook.
+mercenaries-wyrdstone,mercenaries,Wyrdstone,0,resource,0,Manual effect; see pinned rulebook.
+mercenaries-lucky-charm,mercenaries,Lucky Charm,10,special,6,Manual effect; see pinned rulebook.
+reikland-dagger,reikland,Dagger,2,melee,0,Manual effect; see pinned rulebook.
+reikland-hammer,reikland,Hammer,3,melee,0,Manual effect; see pinned rulebook.
+reikland-sword,reikland,Sword,10,melee,0,Manual effect; see pinned rulebook.
+reikland-bow,reikland,Bow,10,missile,0,Manual effect; see pinned rulebook.
+reikland-long-bow,reikland,Long Bow,15,missile,0,Manual effect; see pinned rulebook.
+reikland-crossbow,reikland,Crossbow,25,missile,0,Manual effect; see pinned rulebook.
+reikland-shield,reikland,Shield,5,shield,0,Manual effect; see pinned rulebook.
+reikland-light-armour,reikland,Light Armour,20,armour,0,Manual effect; see pinned rulebook.
+reikland-wyrdstone,reikland,Wyrdstone,0,resource,0,Manual effect; see pinned rulebook.
+reikland-lucky-charm,reikland,Lucky Charm,10,special,6,Manual effect; see pinned rulebook.
+marienburg-dagger,marienburg,Dagger,2,melee,0,Manual effect; see pinned rulebook.
+marienburg-hammer,marienburg,Hammer,3,melee,0,Manual effect; see pinned rulebook.
+marienburg-sword,marienburg,Sword,10,melee,0,Manual effect; see pinned rulebook.
+marienburg-bow,marienburg,Bow,10,missile,0,Manual effect; see pinned rulebook.
+marienburg-long-bow,marienburg,Long Bow,15,missile,0,Manual effect; see pinned rulebook.
+marienburg-crossbow,marienburg,Crossbow,25,missile,0,Manual effect; see pinned rulebook.
+marienburg-shield,marienburg,Shield,5,shield,0,Manual effect; see pinned rulebook.
+marienburg-light-armour,marienburg,Light Armour,20,armour,0,Manual effect; see pinned rulebook.
+marienburg-wyrdstone,marienburg,Wyrdstone,0,resource,0,Manual effect; see pinned rulebook.
+marienburg-lucky-charm,marienburg,Lucky Charm,10,special,6,Manual effect; see pinned rulebook.
+burgomeisters-dagger,burgomeisters,Dagger,2,melee,0,Manual effect; see pinned rulebook.
+burgomeisters-hammer,burgomeisters,Hammer,3,melee,0,Manual effect; see pinned rulebook.
+burgomeisters-sword,burgomeisters,Sword,10,melee,0,Manual effect; see pinned rulebook.
+burgomeisters-bow,burgomeisters,Bow,10,missile,0,Manual effect; see pinned rulebook.
+burgomeisters-long-bow,burgomeisters,Long Bow,15,missile,0,Manual effect; see pinned rulebook.
+burgomeisters-crossbow,burgomeisters,Crossbow,25,missile,0,Manual effect; see pinned rulebook.
+burgomeisters-shield,burgomeisters,Shield,5,shield,0,Manual effect; see pinned rulebook.
+burgomeisters-light-armour,burgomeisters,Light Armour,20,armour,0,Manual effect; see pinned rulebook.
+burgomeisters-wyrdstone,burgomeisters,Wyrdstone,0,resource,0,Manual effect; see pinned rulebook.
+burgomeisters-lucky-charm,burgomeisters,Lucky Charm,10,special,6,Manual effect; see pinned rulebook.

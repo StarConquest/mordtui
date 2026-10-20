@@ -1,0 +1,5 @@
+id,schema_version,version,name,faction,source,classification,starting_gold,bonus_gold,max_members,max_heroes,allow_debt,initial_advance_cost
+mercenaries,1,1.0,Mercenaries,Mercenaries,"https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf",published,500,0,15,6,false,0
+reikland,1,1.0,Reikland,Reikland,"https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf",published,500,0,15,6,false,0
+marienburg,1,1.0,Marienburg,Marienburg,"https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf",published,500,100,15,6,false,0
+burgomeisters,1,1.0,Burgeoning Burgomeisters house profile,Reikland,"https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf; Errata, plaintext.pdf",house,700,0,15,6,false,15

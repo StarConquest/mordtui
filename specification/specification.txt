@@ -1,0 +1,701 @@
+# Mordtui specification
+
+Status: approved requirements; interaction quality revisions, 2026-10-20.
+“Shall” identifies a requirement; “should” identifies a preference. These are
+product requirements, not a claim that the current Rust scaffold implements them.
+Requirement IDs are stable references for implementation and acceptance checks.
+
+# Purpose and scope
+
+Mordtui is an offline-first CLI/TUI for managing a Mordheim warband throughout a
+campaign: roster construction, battle notes, experience and advances (plus-ups),
+injuries, recruitment, equipment, treasury, and historical review. It shall replace
+the bookkeeping performed in specification/reikland_concept.xlsx while preserving
+an auditable record. Optional AI assistance shall use an OpenAI-compatible endpoint.
+Users shall define their warband's rules in separate human-readable files; using
+a custom warband shall not require writing Rust or using AI.
+
+The first release targets a single local user and multiple local campaigns and
+warbands. Shared campaign servers, simultaneous multiplayer editing, a tactical
+map, automated combat resolution, and a comprehensive bundled rules library are
+outside the first release. Battle mode records tabletop play rather than simulating it.
+
+# Review of the example spreadsheet
+
+The workbook has Summary, Henchmen, Heroes, Ledger, Inventory, Hero_Base_Stats,
+Henchmen_Base_Stats, and Sheet8 worksheets. The following observations inform
+requirements; spreadsheet values are evidence of workflow, not rules authority.
+
+- Summary names the warband “Burgeoning Burgomeisters,” labels it Marienburg, and
+  displays cached values of rating 122, upkeep 0, treasury 2, and wyrdstone 0.
+- Heroes separates base profiles from advances. Hans is a Captain with 28 marked
+  experience entries, including +W and +BS; two Champions and two Youngbloods
+  also have marked advances. An advance marker occupies an experience box.
+- Henchmen contains three named Marksmen groups of two models and a Swordsman
+  group of one. Group equipment is per model; group quantity multiplies equipment
+  consumption and rating. The twelve models include five Heroes and seven Henchmen.
+- Ledger records starting funds, hires, purchases, free finds, quantities, unit
+  prices, gold changes, dates, and notes. Inventory derives owned, assigned, and
+  unassigned quantities from those transactions and the roster.
+- The example uses 700 initial gold and five purchased initial plus-ups at 15 gold
+  each. Marksmen base BS is 4 despite the Marienburg summary label and the Reikland
+  filename. These choices require explicit campaign configuration or reconciliation.
+- The Swordsman's ledger hire costs 35 gold; that amount must be preserved as a
+  recorded transaction even if a selected rules profile quotes another price.
+- Dates include “Initial” and blanks, and Sheet8 contains “1 Search Left” and
+  “12 Oct.” These need setup-phase labels, unknown-date handling, and a structured
+  search allowance; the year and intended search rule cannot be inferred.
+- Fixed roster blocks, text-based item matching, cached formulas, and free-text
+  effects shall be replaced by identities, derived totals, and structured effects.
+  Import shall preserve notes and flag conflicts rather than silently repair them.
+
+# Tooling and interfaces
+
+TECH-01. Implementation shall use Rust, Ratatui for the TUI, and Rig for optional
+AI integration. Core campaign operations shall be shared between CLI and TUI.
+TECH-02. Core operation shall require no account, network access, or AI service.
+CLI-01. The CLI shall support campaign/warband creation and selection, rules
+validation, roster inspection, recruitment/removal, experience/advance recording,
+ledger and inventory operations, battle lifecycle, snapshots, history, validation,
+and export. Commands shall accept stable IDs as well as unambiguous names.
+CLI-02. CLI reads shall support human-readable output and machine-readable JSON.
+Mutations shall expose validation failures and exit nonzero on failure; ambiguous
+names shall never select an arbitrary entity. Help shall document date, reason,
+campaign, and warband selection options. Exact command spelling remains a design choice.
+TUI-01. The TUI shall have a summary, roster, warrior/group detail, inventory,
+ledger, battle dashboard, post-battle checklist, history/snapshot view and AI
+assistant workbench (tab 7). Main navigation shall consistently support 1–7.
+TUI-02. All workflows shall be keyboard accessible with visible shortcuts, search,
+filtering, contextual help, and recoverable form errors. Meaning shall not depend
+only on color. Small terminals shall scroll or show a useful minimum-size message.
+TUI-03. Summary shall show roster size, available fighters, Heroes, rating,
+treasury, wyrdstone, upkeep obligations, and unresolved tasks with drill-down.
+Every tab shall show PRE-BATTLE, BATTLE or POST-BATTLE prominently in its shared
+header, including a ready indication for a prepared battle. Phase shall be text,
+independent of the selected tab or color.
+
+TUI-04. The default Warband quick-look tab shall present a spreadsheet-style
+roster table with unit/group name, warrior type, active member count, M, WS, BS,
+S, T, W, I, A, Ld, total XP, and pending advances. Every unit/group shall have
+its own characteristic labels directly above its numbers, including after
+scrolling; a single distant table header is insufficient. Pending plus-ups shall
+have an explicit READY marker and count, plus a summary notice. Heroes shall appear before
+Henchman groups. Group XP shall be clearly identified as shared. Equipment per
+model shall appear in wider layouts and in the selected unit's detail panel.
+The selected dossier shall show individual members and availability, loadouts,
+base/current profiles, skills/spells, lasting or conditional effects, and notes.
+Random characteristics shall remain readable expressions until resolved.
+
+TUI-05. Routine session operations shall be available through visible actions,
+searchable menus, and graphical forms, without requiring command syntax, shell
+quoting, copied IDs, or editing data files. The command palette may remain an
+optional advanced interface. The required graphical operations are:
+- Select/create a campaign or warband and import an opening state.
+- Hire individuals/groups, reinforce an existing group, rename members, and
+  record death/dismissal/retirement with explicit equipment disposition. Warband
+  shall expose D Dismiss directly. The review shall name the departing member,
+  explain whether equipment returns to stash or is lost, show any need for a new
+  leader, and state that no gold is refunded. Departures shall remove members from
+  the active roster while preserving identities, notes and historical records.
+- Purchase, find, sell, lose, issue, return, and consume equipment; adjust gold;
+  and exchange a user-specified number of wyrdstone shards for agreed total gold.
+- Add XP, resolve characteristic/ability or initial advances, promote a member,
+  record effects and random stats, manage recovery/capture and assign a leader.
+- Prepare/start/end/abandon/complete a battle; record individual wounds,
+  conditions, named kill/OOA credits, objectives and model notes; resolve post-battle injuries.
+- Record the consequences of physical tabletop rolls directly: advances,
+  exploration rewards, injuries and available veteran experience. Manage searches
+  and hired-sword upkeep and complete/skip ordered post-battle stages. No normal
+  workflow shall require a dice log, roll link, dice ID or in-app roller.
+- Add/update notes on a warband, unit, individual or battle; create/inspect/restore
+  checkpoints; undo changes; and export rosters, ledgers, inventory and backups.
+
+TUI-06. Pickers shall display meaningful names and context (type, group, prices,
+stock or status) while passing stable IDs to the shared engine. They shall be
+searchable, retain selections on validation errors, and distinguish duplicate
+names. Forms shall default to the currently selected unit, member, equipment,
+checkpoint or stage where applicable. Changing a participant shall load that
+participant's current battle counters rather than reuse another member's values.
+Stage-gated purchase/hiring pickers shall offer the relevant catalog: rare goods
+during rare searches, common goods during recruitment, and Dramatis Personae
+during their search stage.
+
+TUI-07. Forms shall support keyboard navigation and editing, labeled text and
+choice fields, checkboxes, cancellation, a review screen, and a clearly labeled
+Apply action. Purchase/hire reviews shall show quantities, actual costs and
+treasury impact; equipment reviews shall show copies per model times group size.
+Reviews of departure and database-wide undo/restore shall describe their effects.
+An invalid submission shall preserve entries and display a recoverable error;
+cancellation shall not create an event or consume gold, stock or searches.
+Each accepted submission shall apply once through ordinary engine validation.
+The first typed input in a prefilled text/numeric field shall replace its default.
+Subsequent input and focus changes shall preserve the user's entry. Explicit
+Left/Right/Home/End cursor movement shall allow editing the default in place;
+Backspace/Delete shall clear an untouched default. This applies to mouse-focused
+fields and dynamically loaded values, and shall be explained in the field hint.
+
+TUI-08. The Battle tab shall display one row per participating individual,
+including members of a Henchman group, with current wounds, condition, credited
+kills and objectives. Wound, objective and out-of-action shortcuts shall save
+immediately and preserve unrelated counters and notes. Current wounds shall never
+alter permanent W; out of action shall never imply death. There shall be no
+separate attribution field: ordinary model notes shall capture observations about
+wounds or casualties. Existing attribution text shall remain readable as model
+notes in previews and expanded details, without rewriting historical generations.
+K shall open a reviewed kill/OOA credit, defaulting to the selected warrior and
+allowing a free-text opponent name/description. Blank opponents shall be allowed.
+Each credit shall increment the total once and retain its own identity. J shall
+let the player select which credit to remove, including unspecified older totals;
+zero kills shall report nothing to remove without saving an event. Opponent names
+shall appear beside the selected battle state and in expanded details. Credits
+shall not automatically award XP or mark an opponent dead. Counter edits shall
+not silently discard named entries; the player shall remove those entries first.
+The Battle table shall include all nine characteristics in condensed columns,
+with Rem (wounds remaining) explicitly separate from characteristic W. V shall
+expand the complete current profile, counters, kill log, notes and frozen
+pre-battle reference; wider layouts shall show the frozen reference beside the
+current state. Bracket keys shall add/remove objective credits. F5 shall consistently
+open battle preparation, start or end from any main view; the header shall name
+the current action.
+
+TUI-09. The Post-battle tab shall show ordered stages, completion status, the
+current stage, unresolved injuries/advances, veteran availability and search
+allowances. Its workspace shall include selectable members/groups and relevant
+status, XP, loadouts or searches. Forms shall target that selection in place;
+players shall not need to switch to the battle roster to apply outcomes. Stage
+and target panes shall support both keyboard focus and mouse selection. Scrolling,
+filtering and returning from another tab shall preserve the selected stage and
+target context. Every pending stage shall expose its own actions and explicit
+skip, even before earlier stages finish; completed/skipped stages are read-only.
+On entry and after stage completion, the stage list shall receive focus so
+Up/Down immediately browses every stage without completing/skipping anything.
+Tab/Shift-Tab shall focus targets for row selection. Arrow navigation in an empty
+target list shall return to stage browsing, rather than silently doing nothing.
+
+TUI-10. Stash shall use a table of item, type, price, availability, owned, issued
+and unassigned quantities, with a named-owner detail view. Journal shall offer
+separate ledger, notes, history, checkpoint and injury views. History shall be
+the default journal view. F4 shall open a warband-wide injury list from any tab,
+including unresolved casualties, dated/battle-linked resolved outcomes (including
+descriptive injuries), lasting characteristic effects, recovery and captivity.
+The selected warrior dossier shall also identify injury outcomes explicitly.
+Standard session screens
+shall use labeled tables, summaries and dossiers instead of serialized/debug
+representations of the underlying database.
+
+TUI-11. All graphical mutations shall expose effective date and optional notes.
+Every mutation shall have a meaningful generated reason describing the action,
+named targets and entered consequences. Forms shall update this default as data
+changes, preserve a user's replacement, and include it in review, history and
+any linked ledger entries. Battle shortcuts and direct stage completion shall
+also record clear reasons. Users shall not have to type a reason for routine work.
+Ordinary manual outcomes shall not require a reason or a generic house-rule
+checkbox. Editable actual prices, shard sale totals and physical-roll consequences
+are authoritative player inputs. An exception control may appear only when an
+actual profile preset conflicts with the entry, such as a fixed base stat,
+characteristic cap, equipment restriction or recruitment limit. It shall name
+that specific preset and retain ordinary stock/funding/identity checks. IDs and
+serialization syntax shall remain implementation details. Note editing shall
+preserve prior versions; restoring history may still require an explanation.
+
+TUI-12. Keyboard and mouse shall both support tabs, rows, action buttons, form
+fields and choice pickers. Shortcuts shall be visible in the relevant view.
+The layout shall support at least an 80-column by 24-row terminal with scrolling
+lists/forms/reviews/details and a useful message below that minimum. Mouse state
+and terminal state shall be restored on exit. Keyboard-only use shall remain
+complete, including without a mouse or terminal-specific function keys.
+
+TUI-13. Frontend acceptance tests shall exercise real form/key/mouse routing and
+headless terminal rendering. Cover representative hiring, purchase/allocation,
+XP/advance and battle/post-battle flows, stable-ID selection, duplicate names,
+validation/cancellation, context preservation, and narrow layouts. Existing core
+invariant and persistence tests shall continue to pass.
+
+TUI-14. Only actions for the selected actionable after-action stage shall have
+active shortcuts or appear in its action menu. Buttons, help and key dispatch
+shall derive from one binding definition, with no duplicate action keys within
+a stage. Global navigation/help keys remain available, including Left/Right to
+switch main views from Post-battle. Tab/Shift-Tab changes its focused pane;
+unrelated stage keys shall do nothing. Every pending stage shall have C Finish
+and K Skip, with these controls visible at 80 columns. Completed/skipped stages
+are read-only; once all stages resolve, B Finish Battle remains available from
+every stage. Each action shall validate its own prerequisites independently of
+the user's browsing position; a fixed sequence shall not hide its controls.
+TUI-15. Finish Stage shall validate and advance directly, without a second stage
+picker or a redundant experience-confirmation dialog. Completing the experience
+stage confirms the manual XP allocation after all owed plus-ups are resolved.
+Completing the final rating stage shall finish the battle and save the checkpoint.
+Skipping a stage shall remain an explicit, audited action. Physical veteran
+availability shall be entered as a number, not inferred from a required dice record.
+TUI-16. F3 shall expose campaign rules from any tab. The persistent "Skip Dramatis
+Personae" setting shall hide that stage and automatically record its skip for
+all warbands in that campaign, in current unfinished and future battles. Disabling
+the rule may reopen only automatically skipped steps in unfinished battles;
+completed history and unrelated campaigns shall remain unchanged.
+TUI-17. Players shall define equipment and skills/spells/prayers graphically,
+including name, cost/rarity/category or skill category, descriptive rules and
+equipment lists or eligible skill types/units. Equipment creation shall select
+multiple named equipment lists using a searchable checkbox picker. Space/click
+shall toggle choices without closing it; Enter/Done shall accept the selection;
+Esc shall discard picker changes. Filtering shall retain checks for hidden rows,
+with Ctrl-A/Ctrl-U selecting/clearing the shown choices. Source CSV editing or
+full profile migration shall not be required. Catalog entries shall be audited
+extensions of the selected profile;
+earlier generations and frozen battle references shall stay unchanged. Duplicate
+names within the catalog shall be rejected. Purchase/equipment/skill pickers shall
+offer a New entry action that preserves and resumes the parent form. Cancelling
+the definition shall save nothing. Saving it creates the catalog entry only;
+purchase, equipment issue and learning remain separate reviewed operations.
+Warband shall offer S New Skill and L Record Skill; recording a learned skill
+shall explicitly say it does not consume a pending advance. XP-earned skills
+shall continue through the ordinary advance queue. Resource/eligibility and
+duplicate-learning checks shall still apply to newly defined entries.
+TUI-18. Notes attached to an individual or their unit shall be visible beside
+that model in Battle, in dossiers and post-battle selection details. A dedicated
+panel shall show the three most recently recorded notes, newest first, at 80x24.
+Long entries may be clipped to one line so all three previews remain visible;
+F6 shall expand the full note history. Warband group previews shall include notes
+on all group members as well as the unit; individual battle/injury previews shall
+exclude other members' personal notes. Superseded note versions shall remain in
+history but not displace current notes in the preview. Keyboard selection and
+mouse hover over model rows shall refresh the preview without opening forms or
+saving changes; hovering under a popup shall not change the underlying selection.
+Battle rows shall mark models with notes. F6 shall work from the injury report,
+and the report shall also show recent notes for the selected warrior. Every
+visible toolbar action shall identify its working keyboard shortcut, including
+Enter Details, find/lose, comparison and export.
+
+# Rules definitions and campaign profiles
+
+RULE-01. Rule definitions shall be separate from individual warbands and include
+stable IDs, schema version, content version, title, source URL/document/section,
+and classification as published, optional, or house rule. A campaign shall pin
+its chosen definitions and overrides; changing a source file shall not rewrite history.
+RULE-02. User-authored definitions shall describe faction/subfaction, warrior
+types and roles, base profiles, starting experience, recruitment cost and limits,
+shared equipment lists and type defaults, skill access, spells/prayers,
+progression tables, maximum
+characteristics, injury effects, and hired-sword conditions. Non-experience-gaining
+types shall be representable. Unsupported mechanics may use a documented manual
+resolution with a recorded explanation; they shall not be presented as automated.
+RULE-03. Campaign profiles shall declare starting funding, faction bonuses,
+starting advances or purchased plus-ups, scenario rewards, optional rules, and
+house overrides. Derived budgets shall show their components to avoid applying
+both a faction bonus and an already-adjusted total twice.
+RULE-04. Validation shall identify unknown references, duplicate IDs, invalid
+profiles/tables, contradictory limits, and missing automation support with file
+and field context. Definitions are data and shall not execute arbitrary code.
+RULE-05. Replacements of rule-defined presets shall be visible and attributable.
+Structural corruption, negative item quantities, and impossible references shall
+be rejected. Actual manual results and prices do not constitute rules exceptions
+and retain an optional justification. Explicit preset replacements shall name
+the affected constraint in their audit record. Rule changes shall preview affected entities and create
+an explicit migration event rather than silently recalculating prior snapshots.
+RULE-06. First-release examples shall include a minimal, documented Mercenary
+profile and separate Reikland and Marienburg configurations sufficient to validate
+the workbook workflow. Complete coverage of every published warband is deferred.
+
+# Roster, profiles, and rating
+
+ROSTER-01. Campaigns, warbands, individuals, henchman groups, and group members
+shall have stable IDs. Names may change without breaking history or ownership.
+ROSTER-02. Profiles shall record M, WS, BS, S, T, W, I, A, and Ld. Detail views
+shall explain base values, advances, persistent injury changes, equipment/skill
+modifiers, and temporary battle effects. Current wounds shall be separate from
+the permanent W characteristic. Context-dependent effects shall be labeled.
+ROSTER-03. Henchman groups shall share progression and loadout while retaining
+individual identities for casualties, equipment ownership, promotion, and notes.
+Changing group size shall update required equipment quantities atomically.
+ROSTER-04. Recruitment shall validate funding, role/type/faction limits, group
+capacity, equipment eligibility, and starting experience against the pinned rules.
+Experienced replacements shall account for the campaign's veteran availability
+and extra cost. Creation and mid-campaign recruitment shall be distinct phases.
+ROSTER-05. Death, dismissal, retirement, capture, recovery, missed games, and
+leadership succession shall preserve the member's record and resolve associated
+equipment and campaign effects explicitly. A casualty shall not automatically
+return equipment to the stash. Succession shall use the selected faction rules.
+ROSTER-06. Rating shall be derived with an inspectable contribution per member,
+including group experience multiplied by membership and special creature or hired
+sword contributions. Roster-limit count, income count, battle/rout count, and
+rating shall be separate derived measures, since exceptions can differ [R1, R2].
+
+# Experience, advances, abilities, and injuries
+
+PROG-01. Store starting experience, earned experience, and resolved/pending
+advances separately. Starting experience shall not generate retroactive advances.
+An advance marker shall not add an extra XP on top of its occupied XP entry.
+PROG-02. Scenario and underdog awards shall be proposed from battle facts and
+pinned tables, showing beneficiaries and reasons. The user shall resolve ambiguous
+awards; kills and out-of-action records shall not automatically imply identical XP.
+PROG-03. Crossing a threshold shall queue each owed advance exactly once.
+Support recorded consequence choices, skill eligibility, characteristic caps,
+and final decisions without requiring the raw dice. Profile exceptions shall be
+specific to the conflicting preset.
+PROG-04. Group advances and promotion to Hero shall preserve member identity,
+experience, equipment, and prior increases. Promotion shall enforce available
+Hero slots and track the new Hero's skill access and remaining group resolution.
+PROG-05. Skills, special abilities, spells, and prayers shall have definitions and
+sources, with learned selections and changes stored on the member. Descriptive
+abilities shall remain searchable even when no calculation is automated.
+PROG-06. Separate in-battle knocked down, stunned, and out-of-action states from
+post-battle injury outcomes. Support individual Hero and Henchman injury methods,
+multiple lasting injuries, characteristic penalties, missed battles, death,
+captivity, recovery, and special outcomes requiring manual follow-up.
+PROG-07. Players roll dice physically and enter the resulting consequence.
+Advances, promotions, injuries, stat resolutions, exploration and veteran
+availability shall not require linked dice records or a reason explaining the
+roll. Optional historical dice records shall remain readable for compatibility;
+no current TUI task shall depend on creating one. Reopening or resubmitting an
+outcome shall not apply it twice.
+
+# Treasury, equipment, trading, and exploration
+
+ECON-01. The ledger shall retain transaction ID, category, item/member references,
+quantity, unit price, total gold change, effective date, battle/phase, and optional
+notes/reason. Categories shall cover funding, hires, purchases, sales, finds,
+losses, upkeep, rewards, wyrdstone exchange, and explicit corrections.
+ECON-02. Use integer gold crowns and quantities. Record actual paid amounts
+separately from catalog prices. Normal spending shall reject insufficient funds;
+any permitted debt shall require an explicit campaign rule.
+ECON-03. Inventory shall distinguish total owned, equipped/assigned, and stash
+quantities. Acquisition, allocation, transfer, consumption, sale, and loss shall
+preserve conservation; one item cannot have two owners. Free starting equipment
+shall be recorded explicitly with zero acquisition cost.
+ECON-04. Equipment eligibility shall use named equipment lists scoped to a
+rules profile. Each warrior type shall have one default list. Each model shall
+resolve one list, with an individual assignment taking priority over a group
+assignment and then the type default. Models/groups shall be able to return to
+inheriting their default. Multiple warrior types and all their inheriting models,
+including future recruits, may share a list. An item may belong to multiple lists;
+defining one item with multiple selected lists shall be a single atomic action.
+Graphical actions shall create lists with multiple types/items, assign lists to
+multiple types/groups/models, and edit existing items' list memberships. Warband
+G shall open list assignments; Stash G shall edit the selected item's lists.
+Dossiers and item details shall name the assigned/containing lists. Shared edits
+shall explain effects on other users of the profile, preserve carried equipment,
+and apply to future equipment checks. Equipping a group shall check every active
+member's effective list, alongside loadout, stock, skill and phase checks. An
+explicit nonstandard-loadout control may replace a list restriction. Promotion
+shall preserve applicable individual/group access; profile migration shall map
+list overrides and their item dependencies or report an unresolved dependency.
+Buying a group loadout shall preview quantity times membership and total price.
+ECON-05. Trading shall track rarity/search attempts by eligible member, remaining
+allowances, modifiers, variable prices, results, and phase restrictions. Cancelling
+a purchase shall not silently restore an already-spent search attempt.
+The normal rare-item workflow shall give each participating, active Hero not
+taken out of action in the last battle one search [R4, Trading: Availability].
+Recovering from that battle's injury shall not restore eligibility. Select the
+specific item and record found/failed from the physical roll; either result
+spends the search. One success permits one purchase of that matching item.
+Insufficient funds, cancellation or invalid purchase shall not consume the
+available purchase. Scenario-specific search allowances and legacy workbook notes
+shall not determine trading searches. Old unspecified search records remain
+readable, with each usable search permitting at most one purchase.
+ECON-06. Exploration shall record eligible participants, the player-entered
+result and pending consequences. Raw dice, modifiers or rerolls may appear in
+optional notes but shall never be required. Applying a resolved result
+shall create linked resource/events once; manual table resolution is acceptable
+where the rules definition lacks automation.
+ECON-07. Wyrdstone shall be stock, not immediate gold. Sale shall show shards
+sold, retained stock, applicable income bracket/modifiers, and resulting treasury.
+The workflow shall enforce the selected profile's sale allowance [R2]. The user
+shall enter the actual shard quantity and total gold without an override checkbox
+or mandatory explanation; no warband-size price shall be imposed.
+A zero-shard, zero-gold sale shall be accepted and recorded as no sale, preserving
+stock and treasury while retaining the once-per-battle outcome protection.
+ECON-08. Hired Swords shall track eligibility, hire fee, recurring upkeep,
+advancement policy, rating contribution, and restrictions. Upkeep due, paid,
+waived, or unpaid departure shall be recorded, with its timing defined by the
+profile. Dramatis Personae may use the same contract model with distinct rules.
+
+# Campaign and battle lifecycle
+
+BATTLE-01. Battles shall have stable IDs, editable names, effective dates,
+scenario, opponents and their pre-battle ratings, result, notes, and lifecycle:
+prepared, in progress, post-battle, complete, or abandoned.
+BATTLE-02. Preparation shall freeze the participating roster, availability,
+loadouts, ratings, and pinned rules in a pre-battle snapshot. Mid-battle reference
+shall use that state. Conflicting campaign mutations shall be blocked or explicitly
+recorded as exceptions while the battle is active.
+BATTLE-03. The dashboard shall allow fast stat/equipment/skill lookup and member
+selection, wounds, condition changes, named kill/OOA credits, objectives,
+consumables, and notes, including individual members of a henchman group.
+BATTLE-04. Rout information should show participating count, casualties, threshold,
+leader availability, and applicable exceptions. The player records tests/results;
+Mordtui shall not decide tabletop positioning, line of sight, or combat outcomes.
+BATTLE-05. Battle changes shall autosave and resume after restart. Abandoning a
+battle shall retain its record and require an explicit disposition for consumed
+items and pending outcomes rather than silently discarding campaign changes.
+BATTLE-06. A resumable checklist shall guide post-battle resolution. For the
+reviewed errata profile the ordered stages are injuries, experience, exploration,
+wyrdstone sale, veteran availability, rare purchases, Dramatis Personae search,
+recruitment/common purchases, equipment allocation, and rating update [R2].
+Advances shall resolve within the experience stage. Upkeep and faction-specific
+steps shall be placed according to the chosen definitions.
+BATTLE-07. Steps shall record pending, in-progress, completed, or explicitly
+skipped status. The displayed order is guidance; pending steps may be resolved or
+explicitly skipped in a chosen order. Action-specific prerequisites, eligibility,
+resource checks and duplicate-outcome protection shall be enforced. The campaign
+rule in TUI-16 shall automatically skip the Dramatis Personae stage. Editing a resolved input shall
+invalidate affected downstream proposals and require reconciliation; it shall
+never silently retain stale income, XP, or inventory results.
+BATTLE-08. Completion shall require all mandatory decisions and allocations to
+be resolved or explicitly skipped, then create a named post-battle snapshot.
+Repeated completion shall not duplicate awards, injuries, sales, or upkeep.
+
+# Persistence, audit, snapshots, and recovery
+
+DATA-01. All authoritative data shall be human-readable UTF-8 text, including
+rules, campaign metadata, events, and snapshot metadata. Proposed baseline:
+TOML definitions/configuration and JSON Lines events; settle exact schemas before
+implementation. Derived caches may be disposable and shall never be authoritative.
+DATA-02. Every committed action shall have an immutable event ID, monotonic
+sequence, recorded-at timestamp, effective campaign date, optional justification,
+related entity IDs, and sufficient structured data for deterministic replay.
+Effective date defaults to today and may be supplied by the user. Append order
+controls replay; backdating an action shall not reorder dependent transactions.
+DATA-03. Corrections/undo shall append compensating or superseding events and
+check downstream dependencies. Original actions shall remain inspectable. Changes
+spanning treasury, inventory, roster, and history shall commit all-or-nothing.
+DATA-04. Users shall create named snapshots at any point and compare roster,
+stats, injuries, equipment, XP, and resources between them. Snapshots shall identify
+the event position and exact rules versions. Restoring shall create a branch or
+an audited restore event without erasing subsequent history.
+DATA-05. Writes shall be atomic with safe recovery after interruption, local
+single-writer locking, validation before commit, and clear errors on corruption
+or conflicting external edits. Unsupported schema versions shall fail safely.
+DATA-06. Export and restore shall carry rules dependencies and histories so a
+warband can be reconstructed on another machine. Migrations shall preserve a
+backup and report changes. Secrets shall not appear in exported campaign files.
+DATA-07. Manual file editing shall be supported through validation and an explicit
+reconciliation/import path. Inconsistent files shall not silently replace valid
+state or bypass the audit record.
+
+# Spreadsheet migration and reports
+
+IMPORT-01. First release shall provide a documented manual migration path and
+structured opening-state import; direct XLSX parsing is a later enhancement.
+Import shall preview entities, totals, unresolved mappings, and exceptions before
+committing a single attributable import transaction.
+IMPORT-02. Import shall map all meaningful workbook sheets, preserve original
+notes/date labels and cell references where available, and distinguish unknown
+values from zero. It shall not fabricate historical battle dates or dice rolls.
+Opening balances/progression may be imported without invented historical events.
+IMPORT-03. Migration shall reconcile item quantities, member count, experience,
+rating, and treasury. Spreadsheet formulas/cached values shall be treated as
+comparison evidence; mismatches shall be reported with proposed resolutions.
+REPORT-01. Export shall include a portable text/Markdown roster, CSV ledger and
+inventory, and JSON state/history. Reports shall identify campaign, effective
+snapshot, rules version, and unresolved warnings. Historical reports shall remain
+available after members die or leave.
+
+# Optional AI assistance
+
+AI-01. Rig integration shall support configurable endpoint, model, timeouts, and
+credentials via environment or a separate secret store. Logs shall redact secrets.
+The AI assistant tab, menu action and associated help shall be present only when
+the installed program includes AI support. Other installations shall offer six
+tabs, ignore the unavailable seventh-tab shortcut and cycle across available tabs.
+The in-app workbench shall not present compilation commands or feature flags.
+AI-02. AI may explain recorded state, draft names/notes, suggest recruitment or
+purchases, and propose structured action plans using supplied rules and resources.
+It shall distinguish sourced rules from suggestions and unsupported mechanics.
+AI-03. AI actions shall use the same validation and event paths as manual actions.
+Before any proposed mutation, show costs, roster/inventory changes, and reasons
+for user acceptance. An AI response shall not directly edit authoritative files.
+The AI workbench shall expose the full ordinary player command interface, including
+battle counters/lifecycle, catalog definitions, equipment, skills, campaign settings,
+notes, post-battle actions, checkpoints, imports, exports and history operations.
+The provider shall return a structured ordered proposal. It shall have no write
+tool and no way to provide or bypass player approval. R shall validate every action
+against a disposable copy and show all planned actions, arguments and actual state
+changes. Invalid batches, rejection or cancellation shall leave live data intact.
+Y shall open a separate approval confirmation; only explicit approval within it
+shall publish the reviewed result. Approval shall be single-use and tied to the
+reviewed generation; intervening mutations shall invalidate it. Publishing shall
+switch CURRENT atomically, retaining ordinary per-action events and AI provenance.
+External exports shall remain staged until approval and shall not overwrite files.
+AI-04. Network submission shall be opt-in with visible context scope. Service
+failures shall leave local work intact; all required workflows shall remain usable
+with integration disabled. Accepted proposals shall retain AI provenance in history.
+AI-05. Provider requests shall run without blocking the TUI. Context shall cover
+the selected warband's roster, pinned catalogs/rules, notes, inventory, ledger,
+battle state and checkpoint metadata, excluding unrelated warbands, global event
+history, credentials and arbitrary filesystem contents. Requests and proposals
+shall support follow-up dialogue. Credentials shall stay in the environment;
+no provider shall be contacted until the player sends a request.
+
+# Delivery and acceptance
+
+P0: rules/profile loading and validation; roster and group tracking; XP/advances;
+ledger/inventory; battle capture and manual-assisted post-battle flow; durable
+history/snapshots; essential CLI/TUI; opening-state import and text/CSV export.
+P1: broader automated exploration/trading tables, direct XLSX import, richer
+reports, and optional AI. A P0 manual resolution shall still validate resources,
+record provenance, and prevent duplicate effects. No rule library breadth is implied.
+
+Acceptance scenarios shall include:
+
+AC-01. Recreate the workbook under an explicitly named custom profile: twelve
+models, rating 122, zero upkeep, two gold, zero wyrdstone, and zero unassigned
+balance for each listed equipment item. Preserve Hans's 28 XP and two recorded
+advances without granting retroactive starting advances. Flag the faction/profile
+mismatch and missing dates rather than guessing their intent.
+AC-02. Equip a two-member group with one sword each: consume two swords; reject
+assignment when only one is available. Removing one member resolves that member's
+items according to the recorded departure outcome and changes rating accordingly.
+AC-03. Cross two advance thresholds in one award: queue two resolutions. Resolve,
+restart, and revisit without awarding XP or advances again. Reject invalid cap
+increases and preserve reroll/choice history. Promote a member with an available
+Hero slot and retain that member's identity and XP.
+AC-04. Record out-of-action status without marking the warrior dead; subsequently
+resolve a lasting injury, death, or recovery. A death's equipment disposition and
+leader replacement shall be visible in the post-battle checklist.
+AC-05. Finish a battle, partially resolve exploration/trading, restart, and resume.
+Prevent repeated wyrdstone sale in the reviewed profile and reject double-applied
+rewards. A changed injury that affects exploration eligibility shall require
+reconciliation of dependent outcomes before completion.
+AC-06. Complete a hire/purchase transaction, interrupt persistence, and recover
+either its complete committed effect or its prior state, with no partial ledger
+or allocation. Reject a second simultaneous writer and report invalid files.
+AC-07. Backdate an action, append a correction, and compare pre/post snapshots.
+Original records and recorded-at timestamps remain available; replay and exported
+restore produce the same roster, inventory, treasury, and pending tasks.
+AC-08. Perform the campaign workflow with AI disabled. With AI enabled, reject an
+invalid proposal through ordinary validation; cancellation or endpoint failure
+shall make no campaign changes.
+
+AC-09. Starting with the example warband, launch the TUI and inspect all nine
+characteristics, XP and group counts from the Warband table. Select Hans and a
+Henchman group to inspect their equipment, abilities, injuries and member names
+without entering commands. At 80x24 all primary controls remain reachable.
+AC-10. Use graphical forms to hire a group, purchase its equipment, issue one
+copy per model, award shared XP and resolve an advance. The review shows correct
+costs/copies, and reloading shows the committed results. An insufficient-stock or
+funds error retains the form; cancelling creates no transaction.
+AC-11. Select individual group members in Battle. Reduce wounds, credit a kill,
+mark out of action and switch participants in the full counter form. Confirm
+other counters and model notes are preserved, permanent W is unchanged and nobody is
+marked dead until an explicit injury/departure outcome is applied.
+AC-12. End a battle and resolve its ordered checklist through forms, including
+injuries, XP/plus-ups, physical exploration consequences, arbitrary shard sale,
+veteran availability, searches, upkeep, equipment and stage skips. All operations use the existing validation and audit paths.
+AC-13. Switch between two warbands with identical member names, choose targets
+through pickers, and verify a successful action stays in the chosen warband.
+Use both keyboard and mouse to complete a form, then inspect notes/checkpoints
+and export a backup without invoking the optional command prompt.
+
+AC-14. Scroll a roster longer than the viewport, including at 80x24. Every
+visible group's stat values retain labels immediately above them; clicking either
+line selects the correct group. Pending plus-ups show READY and their count.
+AC-15. From the after-action workspace, choose an injured member, resolve the
+injury, choose a different unit, award XP and record its plus-up, then finish the
+stage without leaving the tab. Selections remain valid after sorting/filtering.
+Finishing XP needs no additional confirmation outcome; finishing rating creates
+the post-battle checkpoint.
+AC-16. Normal note, price, shard-sale, XP, advance and veteran forms contain no
+general override or dice-link control. Resolve an advance with no dice entry or
+reason. Exchange arbitrary x shards for y gold and record veteran XP directly;
+resource conservation and duplicate-outcome protection still hold.
+AC-17. Check each selected after-action stage for duplicate shortcuts and compare
+the displayed buttons/menu against actual key handling. Press keys belonging
+only to other stages: no dialog opens and no data changes. A pending future stage
+has its own controls and can be skipped; completed stages remain read-only.
+AC-18. Inspect every tab before preparation, while prepared, during battle and
+after battle: the phase is always visible at 80x24. Submit defaults without a
+typed note and inspect meaningful journal reasons; replace a default reason and
+verify the user's text is retained after other values change.
+AC-19. An out-of-action Hero who recovers still cannot search. Record a failed
+search and reject a retry. Record a successful specific-item search and permit
+one matching purchase; reject a second, a different item or multiple copies.
+A failed unaffordable purchase shall retain the successful search's availability.
+AC-20. Enable the Dramatis Personae rule, finish a nine-stage after-action, restart
+and prepare another battle. The stage remains hidden and automatically skipped
+for all campaign warbands, while another campaign and completed history are intact.
+AC-21. Use F4 to inspect unresolved injuries, a descriptive result without a stat
+change and a lasting stat penalty; names, source battles and recovery are clear.
+AC-22. At 80 columns inspect all nine Battle characteristics and separate remaining
+wounds. Record two named kill credits and choose one to remove; preserve wounds,
+objectives, condition and notes, and never go below zero. F5 opens the correct
+start/end workflow. Attached model notes are marked in the roster, previewed
+beside the selected model and readable in full with F6/V.
+AC-23. From Purchase create a missing two-handed weapon, cancel once without
+mutation, then save its definition and resume the same quantity/price. Buy/equip
+through normal resource checks. From Advance define a missing skill and resume
+the pending unit with it selected. Resolve once without editing rule files;
+historical catalogs remain intact after restart.
+AC-24. Exercise the AI workbench with a deterministic provider. Sending, receiving,
+reviewing, rejecting and cancelling approval shall perform no live mutations.
+Approve a sequence that defines/buys/equips equipment and learns a skill; all
+actions apply once with AI provenance. A late invalid action, stale generation,
+model-supplied approval flag or export conflict shall not partially publish data.
+
+AC-25. From Warband press D, cancel once without changes, then dismiss a selected
+member with stash and lose equipment choices. Verify inventory, active roster,
+leader succession, no refund, journal reasons and retained identity after restart.
+AC-26. Record named and unnamed kill/OOA credits, restart and remove a chosen
+entry. Other warriors' credits and unrelated counters shall be intact. Older
+unnamed totals and attribution text shall remain readable and correctable.
+At 80x24 hover/select different model rows and see the newest three applicable
+notes immediately; F6 shall retain older and superseded versions. Test AI-enabled
+and AI-disabled installations for correct tab/menu/help visibility and navigation.
+
+AC-27. Create a shared equipment list for several warrior types through the TUI.
+Define one new item and select multiple lists in a checkbox picker. Filter and
+cancel once without changing the form/data, then apply once. Equip models of the
+selected types and a new recruit; unrelated lists shall not grant access. Edit an
+existing item's lists without changing stock or carried gear. Exercise model and
+group overrides, inheritance restoration, mixed-list group validation, promotion,
+rules migration, undo/export/recovery and restart. Older item-permission CSV/JSON
+saves shall resolve the same access through deterministic shared lists, preserving
+group-specific exceptions and original historical files. Newly written list tables
+shall participate in checksum validation. AI plans shall use the same commands
+and require the existing explicit player approval before list changes apply.
+
+# Research sources and interpretation
+
+Reviewed 2026-10-19. These are archived Games Workshop tabletop publications
+hosted by Broheim, not rules for the Mordheim computer game. Source section titles
+are preferable to PDF viewer page numbers, which differ between editions.
+
+[R1] Mordheim, Part 2: Warbands, “Starting a warband,” “Mercenaries,” and
+“Calculate the warband rating.” Basis for separate faction profiles, group
+loadouts, roster constraints, and inspectable rating contributions.
+https://broheim.net/downloads/rules/Mordheim%20-%20Part%202%20-%20Warbands.pdf
+
+[R2] Mordheim Rules Review / Errata, especially “Page 117, Post Battle Sequence,”
+“Page 121, Henchmen,” and “Page 147, Recruiting Hired Swords.” Basis for explicit
+phase sequencing, single-sale tracking, and separate hired-sword counting policies.
+https://broheim.net/downloads/rules/Errata,%20plaintext.pdf
+
+[R3] Mordheim Living Rulebook, “Experience,” “Income,” “Trading,” and “Hired
+Swords.” Basis for the progression, exploration, equipment, and contract workflows.
+https://broheim.net/downloads/rules/Mordheim%20Living%20Rulebook.pdf
+
+[R4] Mordheim, Part 3: Campaigns & Optional Rules, “Campaigns,” “Experience,”
+“The lad's got talent,” and “Underdogs.” Basis for promotion, battle-linked awards,
+and explicit optional-rule configuration.
+https://broheim.net/downloads/rules/Mordheim%20-%20Part%203%20-%20Campaigns%20%26%20Optional%20Rules.pdf
+
+Product choices such as event replay, IDs, transactional writes, AI previews, and
+CLI exports are proposed engineering requirements inferred from the original
+specification and workbook workflow, rather than tabletop rules. The reviewed
+publications may overlap or incorporate some errata; loading multiple sources
+shall not apply the same change twice. A profile must declare its resolved rules.
+
+# Decisions to settle before implementation
+
+- Confirm the example's intended faction and status of its starting funds,
+  purchased advances, Swordsman price, and existing stat adjustments.
+- Answer: The example warband was a Reikland warband, the Marienburg labeling was erroneous. Note that some warbands (like chaos) have edge-case stats in their models, like a condemnded having random strength, which must be handled.
+
+- Define supported platform/terminal baseline, final file schemas, and CLI syntax.
+- Answer: Linux is the target platform. Data should be saved into database folders with csvs that follow good database practices. The CLI should enable basic look-up and manipulation. For example "mordheim list heros" would list the heros in the warband, whereas "mordheim list equipment" would list equipment, issued or stored.
+
+- Select the exact baseline publication/errata combination and initial automated
+  tables; identify remaining manual mechanics in the shipped profile.
+  Answer: All errata are used, but some house-rules exist, so it is important that every action have reasonable user overrides. For example, the user should be able to sell x wyrdstone for y gold, arbitrary x/y, based on the campaign rules, rather than the size of their warband.
+  
+- Confirm whether “1 Search Left” tracks rare trading, Dramatis Personae, or a
+  campaign-specific allowance. Preserve it as an unresolved note until clarified.
+- "1 search left" is a holdover from a previous-campaign battle that followed house rules. This highlights the importance of allowing the user to set and update  arbitrary notes/comments at some point in the tool.
