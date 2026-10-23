@@ -3,7 +3,6 @@ name = "mordtui"
 version = "0.1.0"
 edition = "2024"
 description = "Offline Mordheim campaign manager with an auditable CSV database and terminal UI"
-license = "MIT"
 default-run = "mordheim"
 
 [[bin]]

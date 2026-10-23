@@ -284,5 +284,3 @@ The current scope is local, player-assisted campaign bookkeeping. Complete rules
 libraries, automated combat/table adjudication, direct XLSX import and shared
 campaign servers are outside the implementation. Custom data and recorded
 consequences support campaign-specific play.
-
-Licensed under MIT, as declared in [Cargo.toml](Cargo.toml).
