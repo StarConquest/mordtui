@@ -75,13 +75,13 @@ saved immediately, with a journal entry.
 | Tab | Purpose | Common controls |
 | --- | --- | --- |
 | Overview | Treasury, rating, availability, upkeep and session tasks | **F2** switch warband, **F5** battle |
-| Warband | Spreadsheet-style profiles, group sizes, XP and pending advances | **H** hire, **D** dismiss, **E** equip, **X** XP, **U** advance, **G** equipment lists |
+| Warband | Spreadsheet-style profiles, group sizes, XP and pending advances | **H** hire, **V** veteran XP, **D** dismiss, **E** equip, **X** XP, **U** advance, **G** equipment lists |
 | Stash | Owned, issued and stored equipment, prices and owners | **P** purchase, **S** sell, **G** item lists, **C** new equipment |
 | Battle | Individual profiles, wounds, condition, kill credits and objectives | **−/+** wounds, **K/J** add/remove kill, **O** out of action, **W** counters, **V** full profile |
 | Post-battle | Stages alongside their relevant models, groups and outcomes | **C** finish stage, **K** skip stage; other keys follow the selected stage |
 | Journal | History, snapshots, injuries, ledger and notes | **V** change journal view, **S** snapshot, **Enter** details |
 | Rules | Author profiles, warrior types, lists, equipment, skills, XP progression and starting gear | **P** profile, **N** new, **E** edit, **C** copy, **D** delete, **W** create warband |
-| AI assistant, when available | Proposed actions, review and player approval | **N** ask, **R** review, **Y** approve, **D** reject |
+| AI assistant | External-agent tasks, proposals and player approval | **N** new task, **P** next proposal, **R** review, **Y** approve, **D** reject |
 
 Use **Left/Right**, numbered tabs, or **Tab/Shift-Tab** to change views. On
 Post-battle, Tab/Shift-Tab switches focus between stages and targets; on Rules it
@@ -99,6 +99,23 @@ Warband stat labels repeat above each group's values. Pending advances are
 marked **READY**. Selecting or hovering over a model shows its three most recent
 notes; F6 opens the full note history. Dismissal lets you return carried equipment
 to the stash or record its loss, while retaining the member's history.
+
+When reinforcing a Henchman group, select **Reinforce group** in **H Hire**.
+The review shows the hire price, veteran premium, included gear, stash copies,
+automatic purchases and total treasury change. Missing equipment is bought at
+catalog prices if common and permitted by the group's equipment list; rare items
+must already be in the stash. The entire hire and its equipment are saved together.
+The default hire price per recruit is **base cost + 2 gc × the group's XP**;
+equipment purchases are additional. The optional actual unit price replaces that
+hire charge and leaves equipment costs separate.
+
+Experienced reinforcements use the current post-battle allowance, or the most
+recent completed battle's remaining allowance between battles. **V Veteran XP**
+on Warband lets you record or correct the physical roll's **total**, even after
+that battle is complete. **V** is also available on Post-battle after completion
+and in recruitment. Already spent XP stays spent; correcting the total does not
+reopen stages or change saved snapshots. A prepared or active battle still locks
+recruitment and allowance changes.
 
 ### Forms and selections
 
@@ -268,36 +285,54 @@ generations should not be edited in place. Older equipment permissions are
 converted to shared lists when loaded without rewriting historical files.
 See [the database reference](docs/database.md) for schema and reconciliation details.
 
-## Optional AI assistant
+## External AI agents (MCP)
 
-AI support is optional and omitted from the default build. To install it:
+Tab **8 AI assistant** is a local workbench for an external agent. Mordtui does
+not call a model provider or require API credentials. The agent application
+chooses its own model and manages its own conversation.
 
-```sh
-cargo install --path . --locked --features ai
+Add Mordtui to your agent application's MCP server configuration, using the same
+**absolute database path** as your TUI:
+
+```json
+{
+  "mcpServers": {
+    "mordtui": {
+      "command": "mordheim",
+      "args": ["--db", "/absolute/path/my-campaign", "mcp"]
+    }
+  }
+}
 ```
 
-Configure the provider through the environment before launching:
+The executable must be on the agent application's PATH; otherwise use its absolute
+path as `command`. The server uses MCP stdio, can run alongside the TUI, and works
+in the default installation. Existing provider settings (`MORDTUI_AI_*`) are no
+longer used. The old `ai` Cargo feature remains an empty compatibility alias.
 
-| Variable | Purpose |
-| --- | --- |
-| `MORDTUI_AI_MODEL` | Required model name |
-| `MORDTUI_AI_KEY` | Required provider credential |
-| `MORDTUI_AI_ENDPOINT` | Optional API base URL; defaults to `https://api.openai.com/v1` |
-| `MORDTUI_AI_TIMEOUT` | Optional request timeout in seconds; defaults to `60` |
+In tab 8, **N** queues a local task. You can also queue one while the TUI is open:
 
-Tab **8 AI assistant** appears only in installations with AI support; other
-installations have seven tabs, ending with Rules. Sending a request
-shares the selected warband's roster, rules/catalogs, notes, inventory, ledger,
-battle state and checkpoint metadata. Requests exclude credentials, unrelated
-warbands and global event history. No provider is contacted until you send a
-request.
+```sh
+mordheim --db /absolute/path/my-campaign ai 'Suggest equipment for my heroes'
+```
 
-The assistant can propose any player action. **R** validates the full plan in a
-disposable database and lists the proposed actions and actual changes. **Y** opens
-an approval confirmation; press **Y** there to apply the reviewed plan. **D**
-rejects it. Sending, receiving and reviewing proposals make no campaign changes.
-Approval is single-use and expires when campaign data changes. The CLI `ai`
-command provides advice, with `--send` required for provider submission.
+Ask your agent to read `mordtui_requests`, `mordtui_context` and
+`mordtui_commands`, then submit a complete plan with `mordtui_propose`.
+`mordtui_rules` exposes unused rule profiles for authoring a new warband.
+`mordtui_proposal_status` reports review feedback and the player's decision.
+Agents can propose every ordinary player command, including rules, battle actions,
+purchases, notes and history operations.
+
+**P** cycles received proposals; the target warband is shown on each one.
+**R** validates all actions in a disposable database and lists their actual
+changes. **Y** opens an approval confirmation; press **Y** there to apply the
+reviewed plan. **D** rejects it. No MCP tool can execute or approve actions.
+Proposals survive restarts, apply once, and expire when campaign data changes.
+Receiving and reviewing plans makes no campaign changes. The external agent is
+responsible for any network use; Mordtui itself communicates only locally.
+
+See [the external-agent protocol](docs/external-agents.md) for schemas, tool
+arguments and the approval workflow.
 
 ## Development and reference
 
@@ -311,7 +346,7 @@ cargo clippy --locked --all-targets --all-features -- -D warnings
 
 Tests cover the TUI with a terminal test backend, CLI workflows, equipment-list
 inheritance, inventory conservation, progression, battles, persistence, migration,
-backups and AI proposal approval. Automated tests do not need provider credentials.
+backups and AI proposal approval. Automated tests do not need a model provider or agent application.
 
 | Path | Contents |
 | --- | --- |
@@ -320,7 +355,7 @@ backups and AI proposal approval. Automated tests do not need provider credentia
 | [`src/engine.rs`](src/engine.rs) | Shared command execution and validation |
 | [`src/model.rs`](src/model.rs) | Data records and invariants |
 | [`src/store.rs`](src/store.rs) | CSV generations, locking, checksums and backups |
-| [`src/ai/`](src/ai/) | Structured action plans and approval |
+| [`src/ai/`](src/ai/) | MCP server, proposal inbox and player approval |
 | [`examples/`](examples/) | Opening warband and editable rule profiles |
 | [`tests/`](tests/) | Integration tests |
 | [`specification/specification.txt`](specification/specification.txt) | Requirements, acceptance criteria and rules sources |

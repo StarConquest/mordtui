@@ -1,6 +1,8 @@
 use super::*;
 use ratatui::{Terminal, backend::TestBackend};
 use tempfile::TempDir;
+mod external_agent_tests;
+mod recruitment_tests;
 fn setup() -> (TempDir, Store, Cli, App) {
     let dir = TempDir::new().unwrap();
     let mut store = Store::open(dir.path()).unwrap();
@@ -1429,18 +1431,20 @@ fn new_skill_from_advance_picker_returns_to_the_pending_unit_and_resolves_it() {
             .contains("Streetwise")
     );
 }
-#[cfg(feature = "ai")]
 fn offer_plan(app: &mut App, store: &Store) {
     let plan=crate::ai::plan::Plan::parse(r#"{"summary":"Requested changes","actions":[{"description":"Add ten gold","args":["gold","10"]},{"description":"Record a model note","args":["note","hans","AI reviewed note"]}]}"#).unwrap();
-    let (tx, rx) = std::sync::mpsc::channel();
-    app.ai.generation = store.generation.clone();
-    app.ai.receiver = Some(rx);
-    tx.send(Ok(plan)).unwrap();
-    app.poll_ai(store);
+    crate::ai::exchange::submit(
+        &store.root,
+        &store.generation,
+        Some("example-warband"),
+        None,
+        plan,
+    )
+    .unwrap();
+    app.next_ai(store);
     app.tab = AI_TAB;
 }
 #[test]
-#[cfg(feature = "ai")]
 fn ai_workbench_cannot_apply_before_review_and_explicit_confirmation() {
     let (_dir, mut store, cli, mut app) = setup();
     offer_plan(&mut app, &store);
@@ -1468,7 +1472,6 @@ fn ai_workbench_cannot_apply_before_review_and_explicit_confirmation() {
     assert_eq!(store.db, approved);
 }
 #[test]
-#[cfg(feature = "ai")]
 fn rejecting_or_staling_a_workbench_plan_leaves_the_campaign_unchanged() {
     let (_dir, mut store, cli, mut app) = setup();
     offer_plan(&mut app, &store);
@@ -1676,28 +1679,30 @@ fn group_note_previews_include_individuals_and_superseding_notes() {
 }
 
 #[test]
-fn ai_tab_and_actions_match_the_installed_feature_without_build_instructions() {
+fn external_agent_tab_is_available_without_build_features_or_credentials() {
     let (_dir, mut store, cli, mut app) = setup();
-    assert_eq!(TABS.len(), if cfg!(feature = "ai") { 8 } else { 7 });
-    assert_eq!(
-        app.actions(&store.db).contains(&Action::AiRequest),
-        cfg!(feature = "ai")
-    );
-    let s = screen(&mut app, &store, 140, 30);
-    assert_eq!(s.contains("8 AI assistant"), cfg!(feature = "ai"));
+    assert_eq!(TABS.len(), 8);
+    assert!(app.actions(&store.db).contains(&Action::AiRequest));
+    assert!(screen(&mut app, &store, 140, 30).contains("8 AI assistant"));
     app.key(key(KeyCode::Char('8')), &mut store, &cli);
-    if cfg!(feature = "ai") {
-        assert_eq!(app.tab, AI_TAB);
-        let s = screen(&mut app, &store, 140, 40);
-        assert!(
-            s.contains("AI assistant") && !s.contains("--features") && !s.contains("cargo build")
-        );
-    } else {
-        assert_eq!(app.tab, 1);
-        app.open(Action::AiRequest, &store, &cli);
-        assert!(matches!(app.overlay, Overlay::None));
-        assert!(!help_text().contains("AI tab") && !help_text().contains("Tab 8"));
-    }
+    assert_eq!(app.tab, AI_TAB);
+    let s = screen(&mut app, &store, 140, 40);
+    assert!(
+        s.contains("MCP")
+            && !s.contains("--features")
+            && !s.contains("cargo build")
+            && !s.contains("MORDTUI_AI_KEY"),
+        "{s}"
+    );
+    app.key(key(KeyCode::Char('n')), &mut store, &cli);
+    field(&mut app, "prompt", "Help me buy a weapon");
+    let before = store.db.clone();
+    submit(&mut app, &mut store, &cli);
+    assert_eq!(store.db, before);
+    let requests = crate::ai::exchange::requests(&store.root).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].warband.as_deref(), Some("example-warband"));
+    assert_eq!(requests[0].prompt, "Help me buy a weapon");
     app.switch_tab(TABS.len() - 1);
     app.key(key(KeyCode::Right), &mut store, &cli);
     assert_eq!(app.tab, 0);

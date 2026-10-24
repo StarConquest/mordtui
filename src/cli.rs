@@ -126,7 +126,7 @@ pub enum Command {
         unit: String,
         ability: String,
     },
-    /// Hire a Hero, Hired Sword, or a group; add to an existing group with --group
+    /// Hire warriors; --group reinforces and buys missing eligible common equipment
     Recruit {
         kind: String,
         name: String,
@@ -280,9 +280,12 @@ pub enum Command {
         #[arg(long, action = clap::ArgAction::Set)]
         found: bool,
     },
-    /// Record veteran availability after rolling at the table
+    /// Record/correct total veteran XP rolled, including after a battle is complete
     Veterans {
         experience: u32,
+        /// Defaults to the current post-battle or most recent completed battle
+        #[arg(long)]
+        battle: Option<String>,
     },
     /// Record a keyed manual outcome once, optionally granting resources
     Resolve {
@@ -349,12 +352,12 @@ pub enum Command {
         #[arg(long)]
         apply: bool,
     },
-    /// Optional AI advice. --send explicitly permits submitting selected warband context
+    /// Queue a request for an external agent; review its proposals in TUI tab 8
     Ai {
         prompt: String,
-        #[arg(long)]
-        send: bool,
     },
+    /// Serve external agents over MCP stdio; may run alongside the TUI
+    Mcp,
     Tui,
 }
 #[derive(Subcommand, Debug)]

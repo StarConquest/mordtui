@@ -11,7 +11,8 @@ path = "src/main.rs"
 
 [features]
 default = []
-ai = ["dep:rig-core", "dep:tokio", "dep:reqwest"]
+# Compatibility alias; the local external-agent interface is always available.
+ai = []
 
 [dependencies]
 anyhow = "1"
@@ -28,7 +29,4 @@ sha2 = "0.10"
 shell-words = "1"
 uuid = { version = "1", features = ["v4", "serde"] }
 tempfile = "3"
-rig-core = { version = "0.24", optional = true }
-tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"], optional = true }
 

@@ -1,6 +1,6 @@
 # Mordtui specification
 
-Status: approved requirements; rules-authoring workspace, 2026-10-24.
+Status: approved requirements; external-agent MCP workbench, 2026-10-24.
 “Shall” identifies a requirement; “should” identifies a preference. These are
 product requirements, not a claim that the current Rust scaffold implements them.
 Requirement IDs are stable references for implementation and acceptance checks.
@@ -11,7 +11,8 @@ Mordtui is an offline-first CLI/TUI for managing a Mordheim warband throughout a
 campaign: roster construction, battle notes, experience and advances (plus-ups),
 injuries, recruitment, equipment, treasury, and historical review. It shall replace
 the bookkeeping performed in specification/reikland_concept.xlsx while preserving
-an auditable record. Optional AI assistance shall use an OpenAI-compatible endpoint.
+an auditable record. Optional assistance shall be driven by an external agent over
+a local MCP interface; Mordtui shall not call an AI provider itself.
 Users shall define their warband's rules in separate human-readable files; using
 a custom warband shall not require writing Rust or using AI.
 
@@ -51,8 +52,9 @@ requirements; spreadsheet values are evidence of workflow, not rules authority.
 
 # Tooling and interfaces
 
-TECH-01. Implementation shall use Rust, Ratatui for the TUI, and Rig for optional
-AI integration. Core campaign operations shall be shared between CLI and TUI.
+TECH-01. Implementation shall use Rust and Ratatui for the TUI, with a local
+MCP stdio interface for external agents. Core campaign operations shall be shared
+between CLI, TUI and reviewed agent proposals.
 TECH-02. Core operation shall require no account, network access, or AI service.
 CLI-01. The CLI shall support campaign/warband creation and selection, rules
 validation, roster inspection, recruitment/removal, experience/advance recording,
@@ -64,8 +66,9 @@ names shall never select an arbitrary entity. Help shall document date, reason,
 campaign, and warband selection options. Exact command spelling remains a design choice.
 TUI-01. The TUI shall have a summary, roster, warrior/group detail, inventory,
 ledger, battle dashboard, post-battle checklist, history/snapshot view, rules
-authoring workspace (tab 7), and optional AI assistant workbench (tab 8). Main
-navigation shall support 1–7 without AI and 1–8 with it. Left/Right remains global;
+authoring workspace (tab 7), and external AI assistant workbench (tab 8). All
+installations shall expose eight tabs without AI credentials or build features.
+Main navigation shall support 1–8. Left/Right remains global;
 Tab/Shift-Tab changes pane focus inside the Post-battle and Rules workspaces.
 TUI-02. All workflows shall be keyboard accessible with visible shortcuts, search,
 filtering, contextual help, and recoverable form errors. Meaning shall not depend
@@ -288,7 +291,7 @@ assignments. Progression shall allow role-specific XP thresholds, including empt
 progression. Starting equipment rules shall specify each item's quantity per
 recruited model and zero-cost acquisition. Surplus starting gear for an existing
 group shall go to stash while preserving identical group loadouts; stock checks
-shall account for included equipment before requiring replacement stash copies.
+shall account for included equipment and stash before buying common shortfalls.
 An authored type's automatic leader and free-dagger behavior shall be explicit;
 older profiles shall retain the legacy Captain/free-dagger behavior. Other manual
 mechanics shall be describable without claiming scripted rules execution.
@@ -346,7 +349,28 @@ Changing group size shall update required equipment quantities atomically.
 ROSTER-04. Recruitment shall validate funding, role/type/faction limits, group
 capacity, equipment eligibility, and starting experience against the pinned rules.
 Experienced replacements shall account for the campaign's veteran availability
-and extra cost. Creation and mid-campaign recruitment shall be distinct phases.
+and extra cost. The default hire charge shall be N × (warrior base cost + 2 gc ×
+group XP), where group XP is starting plus earned XP and N is the number added,
+not the existing membership. Equipment purchases shall be additional; included
+and existing stash equipment shall not be charged again [R4, Trading, printed
+page 102, "New recruits and existing henchmen groups"]. An explicit actual hire
+price replaces the per-recruit hire charge, with equipment still separate.
+Between battles, the most recent completed battle's remaining
+allowance shall be usable without an active battle. V on Warband and the
+completed Post-battle view shall record/correct that battle's physical roll total.
+The battle's spent XP shall remain consumed on correction; totals below spent XP
+shall be rejected. Corrections shall be audited without reopening completed stages
+or rewriting historical snapshots. A newer post-battle allowance shall supersede
+older allowances. Prepared/active battles shall still block recruitment.
+Creation and mid-campaign recruitment shall be distinct phases.
+ROSTER-04a. Reinforcement shall calculate the group's identical loadout for all
+new members, subtract included starting gear and unassigned stash copies, then
+automatically purchase any remaining eligible common equipment at catalog prices.
+Rare or unavailable equipment shall not be purchased automatically; sufficient
+eligible rare copies already in stash may be issued. The review shall itemize
+hire price, XP premium, included/stash/purchased equipment and full treasury
+change. The entire hire, veteran consumption, purchases and allocations shall
+commit atomically or leave the database unchanged.
 ROSTER-05. Death, dismissal, retirement, capture, recovery, missed games, and
 leadership succession shall preserve the member's record and resolve associated
 equipment and campaign effects explicitly. A casualty shall not automatically
@@ -528,12 +552,13 @@ available after members die or leave.
 
 # Optional AI assistance
 
-AI-01. Rig integration shall support configurable endpoint, model, timeouts, and
-credentials via environment or a separate secret store. Logs shall redact secrets.
-The AI assistant tab, menu action and associated help shall be present only when
-the installed program includes AI support. Other installations shall offer seven
-tabs, ignore the unavailable eighth-tab shortcut and cycle across available tabs.
-The in-app workbench shall not present compilation commands or feature flags.
+AI-01. Assistance shall be driven by an external agent via MCP stdio rather than
+an embedded provider client. The server shall expose discoverable JSON tool schemas
+for reading context, catalog/rule definitions, player requests, command help,
+submitting structured action proposals and checking review/decision status.
+The default installation shall include the server and tab 8 without credentials,
+provider libraries or compilation instructions in the TUI. Model selection,
+conversation and any network traffic belong to the external agent application.
 AI-02. AI may explain recorded state, draft names/notes, suggest recruitment or
 purchases, and propose structured action plans using supplied rules and resources.
 It shall distinguish sourced rules from suggestions and unsupported mechanics.
@@ -543,8 +568,9 @@ for user acceptance. An AI response shall not directly edit authoritative files.
 The AI workbench shall expose the full ordinary player command interface, including
 battle counters/lifecycle, catalog definitions, equipment, skills, campaign settings,
 notes, post-battle actions, checkpoints, imports, exports and history operations.
-The provider shall return a structured ordered proposal. It shall have no write
-tool and no way to provide or bypass player approval. R shall validate every action
+The agent shall submit a structured ordered proposal. The MCP interface shall
+have no execute or approve tool and shall reject agent-supplied approval fields.
+R shall validate every action
 against a disposable copy and show all planned actions, arguments and actual state
 changes. Invalid batches, rejection or cancellation shall leave live data intact.
 Y shall open a separate approval confirmation; only explicit approval within it
@@ -552,15 +578,26 @@ shall publish the reviewed result. Approval shall be single-use and tied to the
 reviewed generation; intervening mutations shall invalidate it. Publishing shall
 switch CURRENT atomically, retaining ordinary per-action events and AI provenance.
 External exports shall remain staged until approval and shall not overwrite files.
-AI-04. Network submission shall be opt-in with visible context scope. Service
-failures shall leave local work intact; all required workflows shall remain usable
-with integration disabled. Accepted proposals shall retain AI provenance in history.
-AI-05. Provider requests shall run without blocking the TUI. Context shall cover
-the selected warband's roster, pinned catalogs/rules, notes, inventory, ledger,
-battle state and checkpoint metadata, excluding unrelated warbands, global event
-history, credentials and arbitrary filesystem contents. Requests and proposals
-shall support follow-up dialogue. Credentials shall stay in the environment;
-no provider shall be contacted until the player sends a request.
+AI-04. MCP shall run alongside the TUI without holding its writer lock. Context
+reads shall use an immutable checksummed generation. Proposals shall include that
+generation and a stable target warband; stale submissions/reviews/approvals shall
+fail without campaign changes. Changing the displayed warband shall not redirect
+a proposal. Only the TUI player approval flow shall publish database generations.
+AI-05. Context shall cover the selected warband's roster, pinned catalogs/rules,
+notes, inventory, ledger, battle state and checkpoint metadata, excluding unrelated
+warband details, global event history, credentials and arbitrary filesystem
+contents. Available warbands shall be listed by ID/name for explicit selection;
+unused rule profiles shall be readable for authoring before campaign creation.
+AI-06. N shall queue a local player task. P shall browse pending proposals, visibly
+identifying the target and stale state; R reviews, Y confirms approval and D rejects.
+Tasks, immutable proposals, review reports and final decisions shall persist across
+TUI/server restarts in a separate local mailbox outside authoritative CSV tables.
+The agent shall be able to read validation feedback and pending/stale/applied/
+rejected/failed status, including its proposal ID. Receipt and review shall never
+apply a proposal. Concurrent arrivals shall not replace a reviewed proposal or
+approval confirmation. Every accepted action shall retain AI-assisted provenance.
+MCP stdout shall contain only newline-delimited JSON-RPC messages; protocol errors
+and malformed tool arguments shall not execute player actions.
 
 # Delivery and acceptance
 
@@ -598,9 +635,9 @@ or allocation. Reject a second simultaneous writer and report invalid files.
 AC-07. Backdate an action, append a correction, and compare pre/post snapshots.
 Original records and recorded-at timestamps remain available; replay and exported
 restore produce the same roster, inventory, treasury, and pending tasks.
-AC-08. Perform the campaign workflow with AI disabled. With AI enabled, reject an
-invalid proposal through ordinary validation; cancellation or endpoint failure
-shall make no campaign changes.
+AC-08. Perform the campaign workflow without an external agent. Connect an agent
+and reject an invalid proposal through ordinary validation; disconnects and
+cancellation shall make no campaign changes.
 
 AC-09. Starting with the example warband, launch the TUI and inspect all nine
 characteristics, XP and group counts from the Warband table. Select Hans and a
@@ -661,7 +698,7 @@ mutation, then save its definition and resume the same quantity/price. Buy/equip
 through normal resource checks. From Advance define a missing skill and resume
 the pending unit with it selected. Resolve once without editing rule files;
 historical catalogs remain intact after restart.
-AC-24. Exercise the AI workbench with a deterministic provider. Sending, receiving,
+AC-24. Exercise the AI workbench with a deterministic external MCP client. Queuing, receiving,
 reviewing, rejecting and cancelling approval shall perform no live mutations.
 Approve a sequence that defines/buys/equips equipment and learns a skill; all
 actions apply once with AI provenance. A late invalid action, stale generation,
@@ -674,8 +711,8 @@ AC-26. Record named and unnamed kill/OOA credits, restart and remove a chosen
 entry. Other warriors' credits and unrelated counters shall be intact. Older
 unnamed totals and attribution text shall remain readable and correctable.
 At 80x24 hover/select different model rows and see the newest three applicable
-notes immediately; F6 shall retain older and superseded versions. Test AI-enabled
-and AI-disabled installations for correct tab/menu/help visibility and navigation.
+notes immediately; F6 shall retain older and superseded versions. Test default
+and compatibility-feature installations for tab/menu/help visibility and navigation.
 
 AC-27. Create a shared equipment list for several warrior types through the TUI.
 Define one new item and select multiple lists in a checkbox picker. Filter and
@@ -699,8 +736,25 @@ exercise mouse and keyboard navigation, long-form paging, cancel, edit, profile
 selection, copying and deletion. Copy/edit without affecting original profile
 users; invalid edits/dependency deletions shall leave CURRENT and history intact.
 Legacy CSV/JSON profiles shall preserve behavior with new optional columns.
-Run both AI configurations: Rules is always tab 7, optional AI is tab 8, and
-post-battle/global navigation and AI approval remain functional.
+Rules shall remain tab 7 and external-agent AI tab 8 in all installations;
+post-battle/global navigation and player approval shall remain functional.
+
+AC-29. Launch the real MCP executable while the TUI holds its writer lock.
+Initialize, list tools, read selected context and submit a generation-bound plan
+without campaign changes or stdout noise. No agent tool or approval field shall
+apply actions. Verify schemas and unused rule profiles on an empty database,
+request linkage, stale submissions, validation feedback, proposal cycling and
+restart persistence. Review a proposal, switch the displayed warband, then approve:
+only the proposed targets may change. Reopening shall not reapply accepted plans.
+
+AC-30. Complete a battle with veteran XP omitted, then record it with V without
+reopening the battle. Reinforce an experienced Henchman group between battles;
+review/pay both hire and equipment costs and issue identical gear. Re-recording
+or correcting the roll shall preserve previously spent XP. Verify included gear,
+partial stash supplies, multiple recruits, insufficient total funds, rare-item
+shortfalls, unavailable list items, cancellation, persisted allowances and older
+saves. New battles shall block hiring while active and use a fresh allowance
+in their own post-battle. No failed operation may consume XP, gold or inventory.
 
 # Research sources and interpretation
 

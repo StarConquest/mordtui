@@ -38,7 +38,6 @@ const TABS: &[&str] = &[
     "Post-battle",
     "Journal",
     "Rules",
-    #[cfg(feature = "ai")]
     "AI assistant",
 ];
 const RULES_TAB: usize = 6;
@@ -71,6 +70,7 @@ enum Hit {
     BattleLifecycle,
     PostTarget(usize),
     PostFocus,
+    AiNext,
     AiReview,
     AiApprove,
     AiReject,
@@ -436,9 +436,6 @@ impl App {
         self.open_selected(action, store, cli, selection);
     }
     fn open_selected(&mut self, action: Action, store: &Store, cli: &Cli, selection: Selection) {
-        if action == Action::AiRequest && !cfg!(feature = "ai") {
-            return;
-        }
         let mut form = Form::new(action, store, self.wb.as_deref(), &selection);
         if let Some(date) = &cli.date {
             form.set("date", date);
@@ -540,7 +537,7 @@ impl App {
         };
         let mut all = preferred;
         for a in Action::ALL {
-            if !all.contains(&a) && (a != Action::AiRequest || cfg!(feature = "ai")) {
+            if !all.contains(&a) {
                 all.push(a);
             }
         }
@@ -1105,6 +1102,7 @@ impl App {
                     state: ListState::default(),
                 })
             }
+            Hit::AiNext => self.next_ai(store),
             Hit::AiReview => self.review_ai(store),
             Hit::AiApprove => {
                 if matches!(self.overlay, Overlay::AiApproval { .. }) {
@@ -1113,7 +1111,7 @@ impl App {
                     self.confirm_ai(store);
                 }
             }
-            Hit::AiReject => self.reject_ai(),
+            Hit::AiReject => self.reject_ai(store),
             Hit::Tab(t) => {
                 if matches!(self.overlay, Overlay::None) {
                     self.switch_tab(t)
@@ -1233,6 +1231,10 @@ impl App {
                     self.open(Action::AiRequest, store, cli);
                     return true;
                 }
+                KeyCode::Char('p') => {
+                    self.next_ai(store);
+                    return true;
+                }
                 KeyCode::Char('r') => {
                     self.review_ai(store);
                     return true;
@@ -1242,7 +1244,7 @@ impl App {
                     return true;
                 }
                 KeyCode::Char('d') => {
-                    self.reject_ai();
+                    self.reject_ai(store);
                     return true;
                 }
                 KeyCode::Up => {
@@ -1666,6 +1668,7 @@ impl App {
                 KeyCode::Char('s') if self.tab == 0 => self.open(Action::Snapshot, store, cli),
                 KeyCode::Char('o') if self.tab == 3 => self.quick(store, cli, "ooa"),
                 KeyCode::Char('v') if self.tab == 3 => self.battle_profile(store),
+                KeyCode::Char('v') if self.tab == 1 => self.open(Action::Veterans, store, cli),
                 KeyCode::Char('v') if self.tab == 5 => self.cycle_journal(),
                 KeyCode::Char('h') => self.open(Action::Hire, store, cli),
                 KeyCode::Char('p') => self.open(Action::Buy, store, cli),
@@ -1820,6 +1823,17 @@ fn changed(f: &mut Form, store: &Store) {
         let u = db.unit(f.value("group"));
         f.set("kind", &u.type_id);
         f.set("name", &u.name);
+    }
+    if f.action == Action::Veterans
+        && key == "battle"
+        && let Some(b) = db.battles.iter().find(|b| b.id == f.value("battle"))
+    {
+        f.set(
+            "experience",
+            b.veteran_budget
+                .saturating_add(crate::engine::recruitment::veteran_spent(db, b))
+                .to_string(),
+        );
     }
     if f.action == Action::Sell
         && key == "item"
@@ -2017,19 +2031,10 @@ pub fn run(store: &mut Store, cli: &Cli) -> Result<()> {
     Ok(())
 }
 fn help_text() -> String {
-    if cfg!(feature = "ai") {
-        HELP.into()
-    } else {
-        HELP.split("\n\n")
-            .filter(|paragraph| !paragraph.starts_with("AI tab 8:"))
-            .collect::<Vec<_>>()
-            .join("\n\n")
-            .replace("1–8", "1–7")
-            .replace(" Tab 8: AI assistant workbench.", "")
-    }
+    HELP.into()
 }
 
-const HELP: &str = "Mordtui session controls\n\n1–8 or Left/Right: change tabs. Tab/Shift-Tab changes tabs outside Post-battle and Rules; inside them it changes pane focus. Up/Down: select a row. Enter: unit dossier / battle form / stage form. Hover model rows to preview recent notes; click tabs, rows, action buttons and form fields. Mouse wheel scrolls lists.\n\nA: searchable menu of every session action. H: hire. P: purchase. E: equip. X: experience. U: advance. N: note. F2: switch warband. F3: campaign rules (including persistent Skip Dramatis Personae). F4: injury list. F5: prepare/start/end battle. F6: selected model/unit notes. F7 / Tab 7: Rules editor. Tab 8: AI assistant workbench.\n\nBattle: -/+ adjust current wounds by one, K opens a kill credit with the opponent name; J chooses a credit to remove; ]/[ adjusts objectives. O marks out of action, W opens all battle counters. OOA is not death. F5 (or B) prepares, starts or ends the active battle. Rem is wounds remaining, separate from W. V expands all details and F6 opens notes.\n\nPost-battle: Up/Down initially browses all stages, including completed/future stages. Tab/Shift-Tab switches between stages and targets; Up/Down selects within the focused pane. Empty target lists return arrow navigation to stages. Left/Right keeps its global meaning: change main tabs. Enter acts on the selected target. Only the selected stage's visible shortcuts are enabled. Every pending stage offers C to complete and K to skip, even when browsing ahead. Rare searches: one per Hero not taken out of action; S records a specific item found/failed, P buys one found item. Dice stay on the tabletop: record consequences directly.\n\nWarband: G assigns equipment lists to types, groups or models. Create shared lists in A Actions. D dismisses a warrior (choose whether gear returns to stash or is lost). S defines a skill, L records a learned skill, C defines equipment. Pickers offer New equipment/skill and resume the original form. Stash: G changes the selected item's equipment lists; C defines equipment, F finds and L loses stock. Enter opens Details. Journal: C compares checkpoints; E exports.\n\nRules (7 / F7): P selects a profile independently of the warband. Up/Down selects sections, Tab switches sections/definitions. N adds, E edits, V expands, D removes unused definitions, C copies a profile and W creates a warband from stored rules. Define profiles, warrior types, equipment lists, items, skills, XP thresholds and starting gear without a campaign or rules files.\n\nJournal opens on History. V cycles History / Snapshots / Injuries / Ledger / Notes. S creates a snapshot; F4 opens the injury list.\n\nForms: Tab/Shift-Tab or Up/Down changes field; PgUp/PgDn jumps through long forms. Enter opens a searchable choice picker; type to filter it, then Enter selects. For checkboxes, Space/click toggles multiple choices, Enter accepts, Esc cancels, Ctrl-A selects all shown and Ctrl-U clears shown. Left/Right cycles single choices. Space toggles checkboxes. Typing first replaces a prefilled value, then edits your entry. Move the cursor first to edit a default in place. Backspace/Delete clears an untouched default. Text fields support Home/End, arrows and Ctrl-U. F10 or Ctrl-S reviews; Enter then applies. Esc backs out without saving. Errors retain your entries.\n\nAI tab 8: N sends a request; R validates every proposed action in a disposable copy. Y opens approval, then Y explicitly applies all actions; Esc cancels confirmation and D rejects. Changed campaign data invalidates approval; proposals never execute themselves.\n\nForms generate readable journal reasons from the action and values; type a replacement if desired. Common session actions never require command syntax or copied IDs. All forms share CLI validation and audited persistence. The optional : command prompt remains for advanced use. / filters a table; Esc clears it. Q quits. Every successful change is already saved.";
+const HELP: &str = "Mordtui session controls\n\n1–8 or Left/Right: change tabs. Tab/Shift-Tab changes tabs outside Post-battle and Rules; inside them it changes pane focus. Up/Down: select a row. Enter: unit dossier / battle form / stage form. Hover model rows to preview recent notes; click tabs, rows, action buttons and form fields. Mouse wheel scrolls lists.\n\nA: searchable menu of every session action. H: hire. P: purchase. E: equip. X: experience. U: advance. N: note. F2: switch warband. F3: campaign rules (including persistent Skip Dramatis Personae). F4: injury list. F5: prepare/start/end battle. F6: selected model/unit notes. F7 / Tab 7: Rules editor. Tab 8: AI assistant workbench.\n\nBattle: -/+ adjust current wounds by one, K opens a kill credit with the opponent name; J chooses a credit to remove; ]/[ adjusts objectives. O marks out of action, W opens all battle counters. OOA is not death. F5 (or B) prepares, starts or ends the active battle. Rem is wounds remaining, separate from W. V expands all details and F6 opens notes.\n\nPost-battle: Up/Down initially browses all stages, including completed/future stages. Tab/Shift-Tab switches between stages and targets; Up/Down selects within the focused pane. Empty target lists return arrow navigation to stages. Left/Right keeps its global meaning: change main tabs. Enter acts on the selected target. Only the selected stage's visible shortcuts are enabled. Every pending stage offers C to complete and K to skip, even when browsing ahead. Rare searches: one per Hero not taken out of action; S records a specific item found/failed, P buys one found item. Dice stay on the tabletop: record consequences directly.\n\nWarband: V records/corrects a resolved battle's veteran XP total; spent XP stays spent. H reinforces a selected Henchman group, buying missing eligible common gear at catalog prices after showing the full cost. Rare gear needs stash copies. G assigns equipment lists to types, groups or models. Create shared lists in A Actions. D dismisses a warrior (choose whether gear returns to stash or is lost). S defines a skill, L records a learned skill, C defines equipment. Pickers offer New equipment/skill and resume the original form. Stash: G changes the selected item's equipment lists; C defines equipment, F finds and L loses stock. Enter opens Details. Journal: C compares checkpoints; E exports.\n\nRules (7 / F7): P selects a profile independently of the warband. Up/Down selects sections, Tab switches sections/definitions. N adds, E edits, V expands, D removes unused definitions, C copies a profile and W creates a warband from stored rules. Define profiles, warrior types, equipment lists, items, skills, XP thresholds and starting gear without a campaign or rules files.\n\nJournal opens on History. V cycles History / Snapshots / Injuries / Ledger / Notes. S creates a snapshot; F4 opens the injury list.\n\nForms: Tab/Shift-Tab or Up/Down changes field; PgUp/PgDn jumps through long forms. Enter opens a searchable choice picker; type to filter it, then Enter selects. For checkboxes, Space/click toggles multiple choices, Enter accepts, Esc cancels, Ctrl-A selects all shown and Ctrl-U clears shown. Left/Right cycles single choices. Space toggles checkboxes. Typing first replaces a prefilled value, then edits your entry. Move the cursor first to edit a default in place. Backspace/Delete clears an untouched default. Text fields support Home/End, arrows and Ctrl-U. F10 or Ctrl-S reviews; Enter then applies. Esc backs out without saving. Errors retain your entries.\n\nAI tab 8: N queues a local task for your external agent; P cycles proposals received over MCP. Start the agent connection with mordheim --db PATH mcp. R validates every proposed action in a disposable copy. Y opens approval, then Y explicitly applies all actions; Esc cancels confirmation and D rejects. Changed campaign data invalidates approval; proposals never execute themselves.\n\nForms generate readable journal reasons from the action and values; type a replacement if desired. Common session actions never require command syntax or copied IDs. All forms share CLI validation and audited persistence. The optional : command prompt remains for advanced use. / filters a table; Esc clears it. Q quits. Every successful change is already saved.";
 
 #[cfg(test)]
 mod tests;

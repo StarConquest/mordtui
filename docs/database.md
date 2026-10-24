@@ -87,6 +87,11 @@ records as arrays named after each table and rejects unknown fields.
   not rewrite historical transactions. Treasury is the sum of gold changes.
 - `battles`, `participants`, ordered `steps`, `searches`, and unique keyed
   `resolutions` retain battle state. Consumption changes inventory immediately.
+  `battles.veteran_budget` holds remaining recruitment XP; the additive
+  `veteran_spent` column tracks spent XP (defaults to zero for older records).
+  Veteran totals can be corrected after completion without reopening stages.
+  Previously spent XP is also inferred from legacy veteran outcomes when present,
+  so correcting a recorded roll does not replenish experience already consumed.
   Pending stages can be resolved or explicitly skipped in a chosen order;
   each action retains eligibility, resource, pending-outcome and duplicate checks.
   `searches.item_id`, `outcome` (found/failed), and `purchased` link each rare-item
@@ -173,3 +178,14 @@ are explicit. Starting equipment grants are separate from list eligibility and
 use zero-cost find ledger entries. Included items cover reinforcement loadout
 needs before consuming stash; any surplus remains unassigned. Changing defaults
 retains existing allocations, transactions, earned XP/advances and innate grants.
+
+## External-agent mailbox
+
+`agent/requests/`, `agent/proposals/`, `agent/reviews/` and `agent/decisions/`
+contain atomically published JSON documents for the local MCP/TUI workbench.
+These are not campaign tables: they do not change CURRENT, need no writer lock,
+and are excluded from campaign export/recovery bundles. A pending proposal binds
+to an immutable campaign generation; only explicit player approval in the TUI
+can publish its validated result through the ordinary writer. MCP reads
+checksummed immutable generations without taking the TUI's lock. See the
+[external-agent protocol](external-agents.md) for schemas and workflow.

@@ -8,6 +8,7 @@ use anyhow::{Context, Result, bail, ensure};
 use serde_json::{Value, json};
 use std::{fs, path::Path};
 mod equipment;
+pub(crate) mod recruitment;
 
 #[derive(Clone)]
 pub struct ContextData {
@@ -471,6 +472,7 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
             | Command::Select { .. }
             | Command::Rules { .. }
             | Command::Rulebook(_)
+            | Command::Ai { .. }
             | Command::List { .. }
             | Command::Validate
             | Command::Import { .. }
@@ -757,13 +759,8 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
             price,
         } => {
             ensure!(*count > 0 && *count <= 1000, "Count must be 1..1000");
-            let candidates: Vec<_> = db
-                .types
-                .iter()
-                .filter(|t| t.profile_id == wb(&db, &c.wb).profile_id)
-                .cloned()
-                .collect();
-            let t = resolve(&candidates, kind)?.clone();
+            let quote = recruitment::quote(&db, &c.wb, kind, group.as_deref(), *count, *price)?;
+            let t = quote.warrior.clone();
             gate(
                 &db,
                 &mut c,
@@ -774,6 +771,9 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                 },
             )?;
             let p = db.profile(&t.profile_id).clone();
+            if c.phase.is_empty() {
+                c.phase = "recruitment".into();
+            }
             let existing: Vec<_> = db.members_of(&c.wb).filter(|m| active(m)).collect();
             c.check(
                 existing
@@ -808,87 +808,46 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                 t.role == "henchman" || *count == 1,
                 "Individuals must be hired one at a time",
             )?;
-            let u = if let Some(q) = group {
-                let u = unit(&db, &c.wb, q)?;
-                ensure!(
-                    u.type_id == t.id && u.role == "henchman",
-                    "Replacement must match a henchman group"
-                );
-                u
-            } else {
-                Unit {
-                    id: id(),
-                    warband_id: c.wb.clone(),
-                    type_id: t.id.clone(),
-                    name: name.clone(),
-                    role: t.role.clone(),
-                    starting_xp: t.starting_xp,
-                    earned_xp: 0,
-                }
-            };
-            let group_members: Vec<_> = db
-                .members
-                .iter()
-                .filter(|m| m.unit_id == u.id && active(m))
-                .cloned()
-                .collect();
+            let u = quote.group.clone().unwrap_or_else(|| Unit {
+                id: id(),
+                warband_id: c.wb.clone(),
+                type_id: t.id.clone(),
+                name: name.clone(),
+                role: t.role.clone(),
+                starting_xp: t.starting_xp,
+                earned_xp: 0,
+            });
+            let group_members = &quote.members;
             c.check(
                 group_members.len() as u32 + count <= t.group_max,
                 "Group capacity exceeded",
             )?;
-            let xp = u.starting_xp + u.earned_xp;
-            let veteran = if group.is_some() { xp * count } else { 0 };
-            if veteran > 0 {
-                let b = current_battle(&db, &c.wb)?;
-                c.check(
-                    b.veteran_budget >= veteran,
-                    "Insufficient available veteran experience",
-                )?;
-                db.battles
-                    .iter_mut()
-                    .find(|x| x.id == b.id)
-                    .unwrap()
-                    .veteran_budget = b.veteran_budget.saturating_sub(veteran);
+            if quote.veteran_required > 0 {
+                let b = quote.veteran_battle.as_ref().context("No resolved battle has a veteran allowance. Record veteran XP with V on Warband before reinforcing an experienced group")?;
+                c.check(b.veteran_budget >= quote.veteran_required,
+                    &format!("Insufficient available veteran experience: need {}, {} remaining. Record/correct the total rolled with V on Warband or veterans, including after battle completion",quote.veteran_required,b.veteran_budget))?;
+                let battle = db.battles.iter_mut().find(|x| x.id == b.id).unwrap();
+                battle.veteran_budget = b.veteran_budget.saturating_sub(quote.veteran_required);
+                battle.veteran_spent = b
+                    .veteran_spent
+                    .checked_add(quote.veteran_required)
+                    .context("Veteran XP overflow")?;
             }
-            let cost = price.unwrap_or(t.cost + if group.is_some() { 2 * xp as i64 } else { 0 });
-            let total = amount(*count, cost)?;
-            check_budget(&db, &c.wb, -total)?;
-            let loadout = group_members
-                .first()
-                .map(|m| {
-                    db.allocations
-                        .iter()
-                        .filter(|a| a.member_id == m.id)
-                        .cloned()
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
-            let mut starting = db
-                .permissions
-                .iter()
-                .filter(|p| p.type_id == t.id && p.kind == "starting-item")
-                .map(|p| (p.target_id.clone(), p.quantity))
-                .collect::<std::collections::BTreeMap<_, _>>();
-            if t.free_dagger.unwrap_or(true)
-                && let Some(d) = db
-                    .items
-                    .iter()
-                    .find(|i| i.profile_id == t.profile_id && i.name == "Dagger")
-            {
-                starting.entry(d.id.clone()).or_insert(1);
+            check_budget(&db, &c.wb, -quote.total)?;
+            for gear in &quote.gear {
+                if gear.purchase > 0 {
+                    buy(
+                        &mut db,
+                        &c,
+                        &gear.item,
+                        gear.purchase,
+                        gear.item.cost,
+                        "purchase",
+                    )?;
+                }
             }
-            for a in &loadout {
-                let copies = a
-                    .quantity
-                    .saturating_sub(starting.get(&a.item_id).copied().unwrap_or(0));
-                let required = copies
-                    .checked_mul(*count)
-                    .context("Replacement equipment quantity overflow")?;
-                ensure!(
-                    db.owned(&c.wb, &a.item_id) - db.assigned(&c.wb, &a.item_id) >= required,
-                    "Not enough replacement equipment in stash"
-                );
-            }
+            let starting = &quote.starting;
+            let loadout = &quote.loadout;
             if group.is_none() {
                 db.units.push(u.clone());
                 let innate: Vec<_> = db
@@ -919,7 +878,7 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                     status: "active".into(),
                     missed_games: 0,
                 };
-                for (item, quantity) in &starting {
+                for (item, quantity) in starting {
                     holding(&mut db, &c.wb, item, i64::from(*quantity))?;
                     ledger(&mut db, &c, "find", (item, &m.id), *quantity, 0, 0);
                     if group.is_none() {
@@ -931,12 +890,12 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                         });
                     }
                 }
-                for a in &loadout {
+                for (item, quantity) in loadout {
                     db.allocations.push(Allocation {
                         id: id(),
                         member_id: m.id.clone(),
-                        item_id: a.item_id.clone(),
-                        quantity: a.quantity,
+                        item_id: item.clone(),
+                        quantity: *quantity,
                     });
                 }
                 if t.leader.unwrap_or(t.name == "Captain") && wb(&db, &c.wb).leader_id.is_empty() {
@@ -948,7 +907,15 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                 }
                 db.members.push(m);
             }
-            ledger(&mut db, &c, "hire", ("", ""), *count, cost, -total);
+            ledger(
+                &mut db,
+                &c,
+                "hire",
+                ("", ""),
+                *count,
+                quote.hire_each,
+                -quote.hire_total,
+            );
             output = roster(&db, &c.wb);
         }
         Command::Remove {
@@ -1617,21 +1584,55 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                 s.used += 1;
             }
         }
-        Command::Veterans { experience } => {
-            gate(&db, &mut c, &["veterans"])?;
-            let b = current_battle(&db, &c.wb)?;
-            resolution(
-                &mut db,
-                &b.id,
-                "veterans",
-                &format!("Available veteran experience: {experience}"),
-                "",
-            )?;
-            db.battles
+        Command::Veterans { experience, battle } => {
+            if let Ok(active) = current_battle(&db, &c.wb) {
+                ensure!(
+                    active.status == "post-battle",
+                    "Campaign changes are locked during a prepared/active battle"
+                );
+            }
+            let candidates: Vec<_> = db
+                .battles
+                .iter()
+                .filter(|b| {
+                    b.warband_id == c.wb && matches!(b.status.as_str(), "post-battle" | "complete")
+                })
+                .cloned()
+                .collect();
+            let mut b = if let Some(query) = battle {
+                resolve(&candidates, query)?.clone()
+            } else {
+                candidates
+                    .last()
+                    .context(
+                        "No resolved battle. End a battle before recording veteran experience",
+                    )?
+                    .clone()
+            };
+            b.veteran_spent = recruitment::veteran_spent(&db, &b);
+            ensure!(
+                *experience >= b.veteran_spent,
+                "Cannot set total veteran XP below {} already spent",
+                b.veteran_spent
+            );
+            let description = format!(
+                "Veteran XP rolled: {experience}; spent: {}; remaining: {}",
+                b.veteran_spent,
+                experience - b.veteran_spent
+            );
+            if let Some(r) = db
+                .resolutions
                 .iter_mut()
-                .find(|r| r.id == b.id)
-                .unwrap()
-                .veteran_budget = *experience;
+                .find(|r| r.battle_id == b.id && r.key == "veterans")
+            {
+                r.description = description;
+            } else {
+                resolution(&mut db, &b.id, "veterans", &description, "")?;
+            }
+            let record = db.battles.iter_mut().find(|r| r.id == b.id).unwrap();
+            record.veteran_spent = b.veteran_spent;
+            record.veteran_budget = experience - b.veteran_spent;
+            output = json!({"battle":b.name,"veteran_total":experience,"veteran_spent":b.veteran_spent,"veteran_remaining":experience - b.veteran_spent});
         }
         Command::Resolve {
             key,
@@ -1693,11 +1694,16 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                     .split(',')
                     .map(|r| r.parse::<u32>().unwrap_or(0))
                     .sum::<u32>();
+                ensure!(
+                    n >= b.veteran_spent,
+                    "Cannot set total veteran XP below {} already spent",
+                    b.veteran_spent
+                );
                 db.battles
                     .iter_mut()
                     .find(|x| x.id == b.id)
                     .unwrap()
-                    .veteran_budget = n;
+                    .veteran_budget = n - b.veteran_spent;
             }
         }
         Command::Step { name, skip, begin } => {
@@ -1879,7 +1885,10 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
             ensure!(!c.reason.is_empty(), "Migration requires --reason");
             db = next;
         }
-        Command::Ai { prompt, send } => return crate::ai::advise(&db, &c.wb, prompt, *send),
+        Command::Ai { .. } => {
+            return crate::ai::queue_request_from(&store.root, &store.generation, &store.db, cli);
+        }
+        Command::Mcp => bail!("MCP must be opened by the stdio frontend"),
         Command::Tui => bail!("TUI must be opened by the terminal frontend"),
     }
     db.validate()?;

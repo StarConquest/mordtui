@@ -213,6 +213,22 @@ fn point(root: &Path, generation_id: &str) -> Result<()> {
     Ok(())
 }
 impl Store {
+    /// CURRENT points at immutable, checksummed generations. Readers need no writer lock.
+    /// Keep this generation ID with the data so later proposals can reject stale state.
+    pub fn read_snapshot(root: &Path) -> Result<(String, Db)> {
+        match fs::read_to_string(root.join("CURRENT")) {
+            Ok(value) => {
+                let generation = value.trim().to_string();
+                let db = load_generation(root, &generation)?;
+                Ok((generation, db))
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                Ok((String::new(), Db::default()))
+            }
+            Err(error) => Err(error.into()),
+        }
+    }
+
     pub fn open(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         fs::create_dir_all(&root)?;

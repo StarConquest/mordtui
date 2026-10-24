@@ -138,7 +138,8 @@ fn toolbar(app: &App, db: &Db) -> Vec<(String, Hit)> {
     }
     if app.tab == AI_TAB {
         return vec![
-            ("N Ask assistant".into(), Hit::Action(Action::AiRequest)),
+            ("N New task".into(), Hit::Action(Action::AiRequest)),
+            ("P Next proposal".into(), Hit::AiNext),
             ("R Review plan".into(), Hit::AiReview),
             ("Y Approve".into(), Hit::AiApprove),
             ("D Reject".into(), Hit::AiReject),
@@ -177,6 +178,7 @@ fn toolbar(app: &App, db: &Db) -> Vec<(String, Hit)> {
     buttons.extend(match app.tab {
         1 => vec![
             ("H Hire", Hit::Action(Action::Hire)),
+            ("V Veteran XP", Hit::Action(Action::Veterans)),
             ("D Dismiss", Hit::Action(Action::Remove)),
             ("P Purchase", Hit::Action(Action::Buy)),
             ("E Equip", Hit::Action(Action::Equip)),
@@ -336,7 +338,7 @@ pub(super) fn draw(f: &mut Frame, app: &mut App, store: &Store) {
     if app.tab == RULES_TAB {
         app.draw_rules(f, store, regions[3]);
     } else if app.tab == AI_TAB {
-        workbench(f, app, regions[3]);
+        workbench(f, app, store, regions[3]);
     } else if app.warband(db).is_none() {
         welcome(f, app, regions[3]);
     } else {
@@ -358,7 +360,7 @@ pub(super) fn draw(f: &mut Frame, app: &mut App, store: &Store) {
     let hint = if app.tab == RULES_TAB {
         "Tab sections/records · ↑↓ select · Enter edit · P profile · N new · F7 rules"
     } else if app.tab == AI_TAB {
-        "N Ask · R Review · Y Approve · D Reject · ↑↓ scroll · ←→ views · ? help"
+        "N Task · P Proposal · R Review · Y Approve · D Reject · ↑↓ scroll · ? help"
     } else if app.tab == 4 {
         if app.post_focus == PostFocus::Stages {
             "↑↓ stages · Tab targets · ←→ views · A actions · F3 rules · F4 injuries"
@@ -1125,7 +1127,7 @@ fn post_battle(f: &mut Frame, app: &mut App, db: &Db, area: Rect) {
             f,
             area,
             "Post-battle",
-            "No active after-action. End a battle to resolve its outcomes.",
+            "No active after-action. End a battle to resolve its outcomes.\nV corrects veteran XP for a completed battle; H on Warband reinforces groups using the remaining allowance.",
         );
         return;
     };
@@ -1338,17 +1340,38 @@ fn post_battle(f: &mut Frame, app: &mut App, db: &Db, area: Rect) {
         Hit::PostFocus,
     ));
 }
-fn workbench(f: &mut Frame, app: &mut App, area: Rect) {
-    let title = if app.ai.receiver.is_some() {
-        "AI assistant · waiting for provider · no changes applied"
+fn workbench(f: &mut Frame, app: &mut App, store: &Store, area: Rect) {
+    let title = if app.ai.plan.is_some() && app.ai.generation != store.generation {
+        "AI assistant · STALE proposal · request a fresh plan"
     } else if app.ai.reviewed.is_some() {
         "AI assistant · validated proposal · explicit approval required"
     } else {
-        "AI assistant workbench · proposals require player approval"
+        "AI assistant · external agents / MCP · player approval required"
     };
-    let default = "N: ask the assistant. The configured provider receives the selected warband, pinned rules, notes and battle data.\n\nThe assistant may propose any player action. Every action is listed before execution. R validates the whole plan in a disposable copy and shows actual data changes. Y opens an approval confirmation; Y in that confirmation applies all actions. D rejects. Changes to campaign data invalidate approval.\n\nConfigure MORDTUI_AI_MODEL, MORDTUI_AI_KEY and optionally MORDTUI_AI_ENDPOINT. No provider is contacted until you send a request.";
+    let default = "Connect your external agent using MCP stdio and the database path below. Mordtui does not call an AI provider or need API credentials.\n\nN queues a local task. Ask your agent to read mordtui_requests, mordtui_context and mordtui_commands, then submit a complete plan through mordtui_propose. P loads/cycles pending proposals, including plans received while this TUI is closed.\n\nR validates every action in a disposable copy and shows the actual changes. Y opens confirmation; Y again applies. D rejects. No agent tool can approve or execute. Campaign changes make proposals stale. Advice-only plans need no approval and may be dismissed with D.";
+    let target = app
+        .ai
+        .proposal
+        .as_ref()
+        .map(|p| {
+            let name = p
+                .warband
+                .as_deref()
+                .map(|id| entity_name(&store.db, id))
+                .unwrap_or_else(|| "No selected warband / rule authoring".into());
+            format!("Proposal: {}\nTarget: {name}\n", p.id)
+        })
+        .unwrap_or_default();
     let content = format!(
-        "REQUEST: {}\n\n{}",
+        "MCP command: mordheim --db {} mcp\nPending proposals: {} · P cycles\n{}REQUEST: {}\n\n{}",
+        shell_words::quote(
+            &std::path::absolute(&store.root)
+                .unwrap_or_else(|_| store.root.clone())
+                .display()
+                .to_string()
+        ),
+        app.ai.inbox.len(),
+        target,
         app.ai.prompt,
         if app.ai.report.is_empty() {
             default

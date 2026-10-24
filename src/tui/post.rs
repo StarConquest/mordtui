@@ -31,17 +31,31 @@ impl App {
                 .is_some_and(|s| !matches!(s.status.as_str(), "completed" | "skipped"))
     }
     pub(super) fn post_bindings(&self, db: &Db) -> Vec<Binding> {
+        if self.battle(db).is_none()
+            && self
+                .wb
+                .as_deref()
+                .and_then(|w| crate::engine::recruitment::veteran_battle(db, w))
+                .is_some()
+        {
+            return vec![bind('v', "Correct veteran XP", Action::Veterans)];
+        }
         if !self.post_unlocked(db) {
-            return if self.battle(db).is_some_and(|b| b.status == "post-battle")
+            let mut bindings = vec![];
+            if self.battle(db).is_some_and(|b| b.status == "post-battle")
+                && self.post_stage(db).is_some_and(|s| s.name == "veterans")
+            {
+                bindings.push(bind('v', "Correct veteran XP", Action::Veterans));
+            }
+            if self.battle(db).is_some_and(|b| b.status == "post-battle")
                 && self
                     .steps(db)
                     .iter()
                     .all(|s| matches!(s.status.as_str(), "completed" | "skipped"))
             {
-                vec![bind('b', "Finish battle", Action::Complete)]
-            } else {
-                vec![]
-            };
+                bindings.push(bind('b', "Finish battle", Action::Complete));
+            }
+            return bindings;
         }
         let mut bindings = match self.post_stage(db).map(|s| s.name.as_str()).unwrap_or("") {
             "injuries" => vec![
@@ -73,6 +87,7 @@ impl App {
             ],
             "recruitment" => vec![
                 bind('h', "Hire", Action::Hire),
+                bind('v', "Veteran XP", Action::Veterans),
                 bind('p', "Purchase", Action::Buy),
                 bind('u', "Upkeep", Action::Upkeep),
                 bind('r', "Dismiss / remove", Action::Remove),

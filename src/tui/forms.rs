@@ -196,7 +196,7 @@ impl Action {
             Self::EditEquipmentLists => "Change an item's equipment lists",
             Self::NewAbility => "Define new skill / spell / prayer",
             Self::GrantAbility => "Record a learned skill (no XP advance)",
-            Self::AiRequest => "Ask the AI assistant",
+            Self::AiRequest => "Request external agent assistance",
             Self::RuleSelect => "Choose rules profile",
             Self::RuleProfile => "Define rules profile / funding / limits",
             Self::RuleWarrior => "Define Hero / Henchman / Hired Sword",
@@ -786,7 +786,7 @@ impl Form {
                 "prompt",
                 "Request",
                 "",
-                "Send selected warband, rules, notes and battle data to your configured AI. Changes always need your approval.",
+                "Queue a local request for your external agent. No network request or campaign change.",
             )],
             Action::Hire => vec![
                 Field::choices(
@@ -1070,12 +1070,49 @@ impl Form {
                     ),
                 ]
             }
-            Action::Veterans => vec![text(
-                "experience",
-                "Available veteran XP",
-                "0",
-                "Enter the total available experience from your physical roll.",
-            )],
+            Action::Veterans => {
+                let battles: Vec<_> = db
+                    .battles
+                    .iter()
+                    .rev()
+                    .filter(|b| {
+                        Some(b.warband_id.as_str()) == wb
+                            && matches!(b.status.as_str(), "post-battle" | "complete")
+                    })
+                    .collect();
+                let total = battles.first().map_or(0, |b| {
+                    b.veteran_budget
+                        .saturating_add(crate::engine::recruitment::veteran_spent(db, b))
+                });
+                vec![
+                    Field::choices(
+                        "battle",
+                        "Battle / veteran allowance",
+                        battles
+                            .iter()
+                            .map(|b| {
+                                Choice::new(
+                                    &b.id,
+                                    format!(
+                                        "{} · {} · {} XP remaining, {} spent",
+                                        b.name,
+                                        b.status,
+                                        b.veteran_budget,
+                                        crate::engine::recruitment::veteran_spent(db, b)
+                                    ),
+                                )
+                            })
+                            .collect(),
+                        None,
+                    ),
+                    Field::text(
+                        "experience",
+                        "Total veteran XP rolled",
+                        total.to_string(),
+                        "Physical roll's total; spent XP stays spent. You can correct a completed battle without reopening it.",
+                    ),
+                ]
+            }
             Action::Prepare => vec![
                 text("name", "Battle name", "", "Required."),
                 text(
@@ -1587,7 +1624,6 @@ impl Form {
         if self.action == Action::AiRequest {
             return Ok(Command::Ai {
                 prompt: self.required("prompt")?,
-                send: true,
             });
         }
         chrono::NaiveDate::parse_from_str(self.value("date"), "%Y-%m-%d")
@@ -1642,7 +1678,6 @@ impl Form {
             },
             Action::AiRequest => Command::Ai {
                 prompt: req("prompt")?,
-                send: true,
             },
             Action::Hire => Command::Recruit {
                 kind: req("kind")?,
@@ -1751,6 +1786,7 @@ impl Form {
             },
             Action::Veterans => Command::Veterans {
                 experience: self.num("experience")?,
+                battle: Some(req("battle")?),
             },
             Action::Prepare => Command::Battle(BattleCommand::Prepare {
                 name: req("name")?,
@@ -1874,15 +1910,24 @@ impl Form {
         let db = &store.db;
         match self.action {
             Action::RuleSelect | Action::RuleProfile | Action::RuleWarrior | Action::RuleList | Action::RuleItem | Action::RuleAbility | Action::RuleProgression | Action::RuleCopy | Action::RuleRemove | Action::RuleCreateWarband | Action::RuleStartingGear => self.rule_impact(store),
-            Action::Hire | Action::Buy | Action::Sell => {
+            Action::Hire => {
+                let w=wb.context("Select a warband")?;
+                let count:u32=self.num("quantity")?;
+                let quote=crate::engine::recruitment::quote(db,w,self.value("kind"),self.optional("group").as_deref(),count,self.optional_num("price")?)?;
+                Ok(quote.describe(db,w,count))
+            },
+            Action::Veterans => {
+                let b=db.battles.iter().find(|b| b.id==self.value("battle")).context("Choose a resolved battle")?;
+                let total:u32=self.num("experience")?;
+                let spent=crate::engine::recruitment::veteran_spent(db,b);
+                ensure!(total>=spent,"Cannot set total veteran XP below {} already spent",spent);
+                Ok(format!("{}: {} veteran XP rolled; {} already spent; {} remaining. Record/correct this allowance without reopening the battle or its stages. Previous snapshots remain intact.",b.name,total,spent,total-spent))
+            },
+            Action::Buy | Action::Sell => {
                 let quantity:u32=self.num("quantity")?;
                 ensure!(quantity>0,"Quantity must be positive");
                 let price=if let Some(price)=self.optional_num::<i64>("price")? {price}
-                else if self.action==Action::Hire {
-                    let base=db.types.iter().find(|t|t.id==self.value("kind")).context("Select warrior type")?.cost;
-                    let veteran=if self.value("group").is_empty(){0}else{let u=db.unit(self.value("group"));2*(u.starting_xp+u.earned_xp) as i64};
-                    base+veteran
-                } else {db.items.iter().find(|i|i.id==self.value("item")).context("Select equipment")?.cost};
+                else {db.items.iter().find(|i|i.id==self.value("item")).context("Select equipment")?.cost};
                 ensure!(price>=0,"Price must be nonnegative");
                 let total=price.checked_mul(quantity as i64).context("Cost overflow")?;
                 let signed=if self.action==Action::Sell{total}else{-total};
@@ -1896,7 +1941,7 @@ impl Form {
             Action::AssignEquipmentList=>Ok("Replace the selected type, group or model assignments. Models inherit group then warrior-type defaults unless individually assigned. Inherit clears a group/model override. Shared type defaults affect all warbands using the profile. Carried equipment and historical references stay intact; future equip checks use the assigned list.".into()),
             Action::EditEquipmentLists=>Ok("Replace this item's equipment-list memberships with the checked lists. Every type/model using those lists gains or loses access for future equipping. No items are bought, removed from stock or unequipped. Historical generations stay intact.".into()),
             Action::GrantAbility=>Ok("Record this learned skill without consuming a pending plus-up. Use Resolve plus-up for an XP-earned skill.".into()),
-            Action::AiRequest=>Ok("Send the request plus selected roster, rules/catalogs, model notes, inventory, ledger, battle state and checkpoint names to the configured AI provider. No changes are applied by sending. The AI returns a proposed action list for separate review and explicit approval.".into()),
+            Action::AiRequest=>Ok("Save a local task for an external agent connected over MCP. The agent can read the selected warband and propose actions. You must separately review and approve every plan in this tab. No provider is contacted by Mordtui.".into()),
             Action::Wyrdstone=>Ok(format!("Remove {} shards from stock; receive {} gc total.",self.value("shards"),self.value("gold"))),
             Action::Restore|Action::Undo=>Ok("This restores the WHOLE DATABASE, including other warbands. Original history remains accessible.".into()),
             Action::Remove=>Ok(format!("{} leaves the active roster as {}. Carried equipment: {}. {}{} History, notes and past battle records are retained; no gold is refunded.",self.label("member"),self.value("status"),self.label("equipment"),if self.value("equipment")=="stash"{"Return all carried items to the stash."}else{"Remove all carried items from inventory."},if wb.and_then(|w|db.warbands.iter().find(|r|r.id==w)).is_some_and(|w|w.leader_id==self.value("member")){" Select a new leader before the next battle."}else{""})),

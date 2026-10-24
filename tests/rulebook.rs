@@ -471,15 +471,28 @@ fn starting_equipment_is_granted_per_model_and_reinforcements_preserve_group_loa
     )
     .unwrap();
     assert_eq!(store.db.assigned(&wb, &k.item), 5);
-    let before = store.db.clone();
-    let error = command(
+    let gold = store.db.gold(&wb);
+    command(
         &mut store,
         &["recruit", "Soldiers", "Blades", "--group", &unit],
     )
-    .unwrap_err()
-    .to_string();
-    assert!(error.contains("replacement"), "{error}");
-    assert_eq!(store.db, before);
+    .unwrap();
+    assert_eq!(store.db.assigned(&wb, &k.item), 6);
+    assert_eq!(store.db.owned(&wb, &k.item), 6);
+    assert_eq!(
+        store.db.gold(&wb),
+        gold - store.db.typ(&store.db.unit(&unit).type_id).cost - 10
+    );
+    assert_eq!(
+        store
+            .db
+            .ledger
+            .iter()
+            .filter(|l| l.category == "purchase" && l.item_id == k.item)
+            .map(|l| l.quantity)
+            .sum::<u32>(),
+        1
+    );
     assert_eq!(
         store
             .db

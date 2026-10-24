@@ -7,11 +7,18 @@ use mordtui::{
 };
 fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let mut store = Store::open(&cli.db)?;
-    if cli.command.is_none() || matches!(cli.command, Some(Command::Tui)) {
-        return tui::run(&mut store, &cli);
+    if matches!(cli.command, Some(Command::Mcp)) {
+        return mordtui::ai::mcp::run(&cli);
     }
-    let value = engine::execute(&mut store, &cli)?;
+    let value = if matches!(cli.command, Some(Command::Ai { .. })) {
+        mordtui::ai::queue_request(&cli)?
+    } else {
+        let mut store = Store::open(&cli.db)?;
+        if cli.command.is_none() || matches!(cli.command, Some(Command::Tui)) {
+            return tui::run(&mut store, &cli);
+        }
+        engine::execute(&mut store, &cli)?
+    };
     println!(
         "{}",
         if cli.json {

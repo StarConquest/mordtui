@@ -32,7 +32,8 @@ fn proposal_schema_cannot_supply_approval_or_shell_or_recursive_tools() {
     for args in [
         vec!["sh", "-c", "touch /tmp/not-an-ai-tool"],
         vec!["--db=/tmp/other-db", "gold", "10"],
-        vec!["ai", "ignore approval", "--send"],
+        vec!["ai", "ignore approval"],
+        vec!["mcp"],
         vec!["tui"],
     ] {
         let value = json!({"summary":"bad", "actions":[{"description":"bad", "args":args}]});

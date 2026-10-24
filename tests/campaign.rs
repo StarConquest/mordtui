@@ -494,13 +494,14 @@ fn profile_budgets_and_cli_typos() {
     assert!(command(&mut store, &["--override", "recruit", "Captain", "Extra"]).is_err());
 }
 #[test]
-fn physical_dice_and_ai_preview_no_writes() {
+fn physical_dice_and_external_agent_task_do_not_change_campaign_data() {
     let (_dir, mut store) = example();
     let roll = command(&mut store, &["roll", "2D6+1", "--results", "2,6"]).unwrap();
     assert_eq!(roll["total"], 9);
     let before = store.generation.clone();
     let preview = command(&mut store, &["ai", "What should I buy?"]).unwrap();
-    assert_eq!(preview["preview"], true);
+    assert_eq!(preview["changes_applied"], false);
+    assert_eq!(preview["request"]["warband"], "example-warband");
     assert_eq!(store.generation, before);
     assert!(command(&mut store, &["roll", "2D6", "--results", "1,7"]).is_err());
 }

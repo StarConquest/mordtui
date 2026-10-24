@@ -83,7 +83,10 @@ fn parsed(action: &PlannedAction, warband: Option<&str>) -> Result<Cli> {
         "A proposal cannot select another database folder"
     );
     ensure!(
-        !matches!(cli.command, None | Some(Command::Ai { .. } | Command::Tui)),
+        !matches!(
+            cli.command,
+            None | Some(Command::Ai { .. } | Command::Mcp | Command::Tui)
+        ),
         "Proposals contain player actions, not recursive AI requests or terminal sessions"
     );
     if cli.warband.is_none() && cli.campaign.is_none() {

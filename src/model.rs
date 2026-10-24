@@ -222,7 +222,9 @@ row!(Battle {
     result: String,
     pre_snapshot: String,
     post_snapshot: String,
-    veteran_budget: u32
+    veteran_budget: u32,
+    #[serde(default)]
+    veteran_spent: u32
 });
 row!(Participant {
     id: String,
@@ -858,6 +860,10 @@ impl Db {
             );
         }
         for b in &self.battles {
+            ensure!(
+                b.veteran_budget.checked_add(b.veteran_spent).is_some(),
+                "Veteran experience overflow"
+            );
             ensure!(
                 self.warbands.iter().any(|w| w.id == b.warband_id),
                 "Unknown battle warband"
