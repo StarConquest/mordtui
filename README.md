@@ -24,7 +24,7 @@ cargo build --locked --release
 ```
 
 Running without a command opens the TUI. An empty database offers campaign
-creation and import actions. The default database is `mordheim-db/` relative to
+creation, import and Rules-editor actions. The default database is `mordheim-db/` relative to
 your working directory; use `--db PATH` to choose another location.
 
 To install the executable on your Cargo binary path:
@@ -80,16 +80,18 @@ saved immediately, with a journal entry.
 | Battle | Individual profiles, wounds, condition, kill credits and objectives | **−/+** wounds, **K/J** add/remove kill, **O** out of action, **W** counters, **V** full profile |
 | Post-battle | Stages alongside their relevant models, groups and outcomes | **C** finish stage, **K** skip stage; other keys follow the selected stage |
 | Journal | History, snapshots, injuries, ledger and notes | **V** change journal view, **S** snapshot, **Enter** details |
+| Rules | Author profiles, warrior types, lists, equipment, skills, XP progression and starting gear | **P** profile, **N** new, **E** edit, **C** copy, **D** delete, **W** create warband |
 | AI assistant, when available | Proposed actions, review and player approval | **N** ask, **R** review, **Y** approve, **D** reject |
 
 Use **Left/Right**, numbered tabs, or **Tab/Shift-Tab** to change views. On
-Post-battle, Tab/Shift-Tab switches focus between stages and targets;
+Post-battle, Tab/Shift-Tab switches focus between stages and targets; on Rules it
+switches between sections and definitions;
 Left/Right still changes the main tab. **Up/Down** selects rows, **/** filters,
 **Enter** opens details or the selected action, and **A** opens the searchable
 Actions menu. Tabs, rows, fields and buttons also accept mouse clicks.
 
 Global shortcuts are **F2** warband selection, **F3** campaign rules, **F4** the
-injury list, **F5** prepare/start/end battle, and **F6** model/unit notes. Press
+injury list, **F5** prepare/start/end battle, **F6** model/unit notes, and **F7** the Rules editor. Press
 **?** for help and **Q** to quit. The optional **:** command prompt is available
 for advanced use; routine session tasks have forms and buttons.
 
@@ -102,7 +104,8 @@ to the stash or record its loss, while retaining the member's history.
 
 Forms start with the selected model, group or item. The first typed input
 replaces a prefilled value. Move the cursor first to edit that default in place.
-Tab/Shift-Tab or Up/Down moves between fields; Enter opens a searchable picker.
+Tab/Shift-Tab or Up/Down moves between fields; Page Up/Down jumps through long
+forms. Enter opens a searchable picker.
 
 For multiple-choice pickers, **Space/click** toggles checkboxes, **Enter/Done**
 accepts, and **Esc** discards picker changes. Filtering retains checked choices;
@@ -112,6 +115,47 @@ accepts, and **Esc** discards picker changes. Filtering retains checked choices;
 retain your entries. Forms generate a readable journal reason from the action
 and selected values, which you can replace. Relevant profile exceptions have
 specific controls; inventory and ownership checks still apply.
+
+### Program a warband from scratch
+
+Open **7 Rules** or press **F7**, including from an empty database. The editor
+has sections for profile defaults, warrior types, equipment lists, equipment,
+skills/spells, XP progression and starting gear. Use **Up/Down** to choose a
+section; **Tab** switches focus to its definitions. **N** adds, **E** edits,
+**V** expands details, and **D** removes an unused definition. **P** switches the
+profile being edited independently of the warband you are playing.
+
+1. In **Profile defaults**, create a profile with its faction, version, source,
+   classification, starting gold and bonus, roster/Hero limits, debt setting,
+   initial-advance cost and campaign-specific rule descriptions.
+2. In **Warrior types**, define Heroes, Henchmen, Hired Swords or Dramatis
+   Personae. Set all nine base characteristics, hire cost, upkeep, starting XP,
+   whether XP is earned, recruitment/group limits, rating contribution and
+   roster/income/battle participation. Choose its equipment list, learnable and
+   innate skills, characteristic caps, leader setting and special rules.
+3. Define items and equipment lists, then select the types/items sharing each
+   list. Skills, spells and prayers have a category, source, rules text, and
+   learnable/innate type assignments. Definitions can be added in any order;
+   a new type without a chosen list receives an empty one to fill later.
+4. Set **XP progression** thresholds for each role. Under **Starting gear**, add
+   the items and quantities included with each recruited model. These create
+   zero-cost acquisitions; reinforcements retain the group's existing loadout
+   and surplus starting items go to stash. The warrior form also controls the
+   legacy free-dagger convention.
+5. Press **W Create warband** to use the stored profile in an existing or new
+   campaign. Starting funds and bonuses are recorded once; hire models afterward.
+
+**C Copy profile** creates an independent copy with all definitions and references
+remapped. Editing a shared profile changes its current users; new funding,
+starting XP, starting equipment and innate abilities apply to future warbands or
+hires. Transactions, existing equipment and earned advances are retained, as are
+previous generations and frozen battle references. Definitions referenced by
+rosters, learned skills, inventory or transactions cannot be deleted.
+
+Special recruitment conditions, contracts, injuries and other tabletop mechanics
+can be recorded in rule descriptions. Players adjudicate these rules and enter
+their consequences; descriptions are not executable scripts. No rules files or
+existing campaign are needed to author a profile.
 
 ### Equipment lists and skills
 
@@ -241,7 +285,8 @@ Configure the provider through the environment before launching:
 | `MORDTUI_AI_ENDPOINT` | Optional API base URL; defaults to `https://api.openai.com/v1` |
 | `MORDTUI_AI_TIMEOUT` | Optional request timeout in seconds; defaults to `60` |
 
-The AI tab appears only in installations with AI support. Sending a request
+Tab **8 AI assistant** appears only in installations with AI support; other
+installations have seven tabs, ending with Rules. Sending a request
 shares the selected warband's roster, rules/catalogs, notes, inventory, ledger,
 battle state and checkpoint metadata. Requests exclude credentials, unrelated
 warbands and global event history. No provider is contacted until you send a
@@ -271,6 +316,7 @@ backups and AI proposal approval. Automated tests do not need provider credentia
 | Path | Contents |
 | --- | --- |
 | [`src/tui/`](src/tui/) | Forms, views and session interactions |
+| [`src/rules/editor.rs`](src/rules/editor.rs) | Rule authoring, profile copies and dependency checks |
 | [`src/engine.rs`](src/engine.rs) | Shared command execution and validation |
 | [`src/model.rs`](src/model.rs) | Data records and invariants |
 | [`src/store.rs`](src/store.rs) | CSV generations, locking, checksums and backups |

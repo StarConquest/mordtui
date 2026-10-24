@@ -88,6 +88,9 @@ pub enum Command {
         #[arg(long)]
         install: bool,
     },
+    /// Author rule profiles and catalogs without a campaign; schema prints JSON templates
+    #[command(subcommand)]
+    Rulebook(RulebookCommand),
     /// Extend the selected profile's equipment catalog without editing rule files
     AddEquipment {
         name: String,
@@ -353,6 +356,32 @@ pub enum Command {
         send: bool,
     },
     Tui,
+}
+#[derive(Subcommand, Debug)]
+pub enum RulebookCommand {
+    Schema,
+    /// Save a definition using a JSON object with kind/data; see rulebook schema
+    Save {
+        definition: String,
+    },
+    Delete {
+        kind: String,
+        id: String,
+    },
+    Clone {
+        profile: String,
+        name: String,
+        #[arg(long, default_value = "1.0")]
+        version: String,
+    },
+    /// Create a warband from an authored profile; --new-campaign creates its campaign
+    CreateWarband {
+        profile: String,
+        campaign: String,
+        name: String,
+        #[arg(long)]
+        new_campaign: bool,
+    },
 }
 #[derive(Subcommand, Debug)]
 pub enum EquipmentListCommand {

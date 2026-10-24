@@ -1078,7 +1078,7 @@ fn reasons_follow_form_values_and_preserve_a_typed_explanation_in_the_journal() 
     let (_dir, mut store, cli, mut app) = setup();
     for action in Action::ALL
         .into_iter()
-        .filter(|a| !matches!(a, Action::Injuries | Action::AiRequest))
+        .filter(|a| !matches!(a, Action::Injuries | Action::AiRequest | Action::RuleSelect))
     {
         let f = Form::new(action, &store, app.wb.as_deref(), &Selection::default());
         assert!(
@@ -1437,7 +1437,7 @@ fn offer_plan(app: &mut App, store: &Store) {
     app.ai.receiver = Some(rx);
     tx.send(Ok(plan)).unwrap();
     app.poll_ai(store);
-    app.tab = 6;
+    app.tab = AI_TAB;
 }
 #[test]
 #[cfg(feature = "ai")]
@@ -1678,16 +1678,16 @@ fn group_note_previews_include_individuals_and_superseding_notes() {
 #[test]
 fn ai_tab_and_actions_match_the_installed_feature_without_build_instructions() {
     let (_dir, mut store, cli, mut app) = setup();
-    assert_eq!(TABS.len(), if cfg!(feature = "ai") { 7 } else { 6 });
+    assert_eq!(TABS.len(), if cfg!(feature = "ai") { 8 } else { 7 });
     assert_eq!(
         app.actions(&store.db).contains(&Action::AiRequest),
         cfg!(feature = "ai")
     );
     let s = screen(&mut app, &store, 140, 30);
-    assert_eq!(s.contains("7 AI assistant"), cfg!(feature = "ai"));
-    app.key(key(KeyCode::Char('7')), &mut store, &cli);
+    assert_eq!(s.contains("8 AI assistant"), cfg!(feature = "ai"));
+    app.key(key(KeyCode::Char('8')), &mut store, &cli);
     if cfg!(feature = "ai") {
-        assert_eq!(app.tab, 6);
+        assert_eq!(app.tab, AI_TAB);
         let s = screen(&mut app, &store, 140, 40);
         assert!(
             s.contains("AI assistant") && !s.contains("--features") && !s.contains("cargo build")
@@ -1696,7 +1696,7 @@ fn ai_tab_and_actions_match_the_installed_feature_without_build_instructions() {
         assert_eq!(app.tab, 1);
         app.open(Action::AiRequest, &store, &cli);
         assert!(matches!(app.overlay, Overlay::None));
-        assert!(!help_text().contains("AI tab") && !help_text().contains("Tab 7"));
+        assert!(!help_text().contains("AI tab") && !help_text().contains("Tab 8"));
     }
     app.switch_tab(TABS.len() - 1);
     app.key(key(KeyCode::Right), &mut store, &cli);
@@ -1944,3 +1944,5 @@ fn shared_list_creation_assignment_and_item_membership_are_graphical() {
         vec![list]
     );
 }
+
+mod rulebook_tests;

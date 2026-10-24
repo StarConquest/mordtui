@@ -6,6 +6,7 @@ use crate::{
 };
 use anyhow::{Context, Result, ensure};
 use std::path::PathBuf;
+mod rulebook;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
@@ -62,9 +63,20 @@ pub enum Action {
     NewAbility,
     GrantAbility,
     AiRequest,
+    RuleSelect,
+    RuleProfile,
+    RuleWarrior,
+    RuleList,
+    RuleItem,
+    RuleAbility,
+    RuleProgression,
+    RuleCopy,
+    RuleRemove,
+    RuleCreateWarband,
+    RuleStartingGear,
 }
 impl Action {
-    pub const ALL: [Self; 53] = [
+    pub const ALL: [Self; 64] = [
         Self::Hire,
         Self::Buy,
         Self::Equip,
@@ -118,6 +130,17 @@ impl Action {
         Self::NewAbility,
         Self::GrantAbility,
         Self::AiRequest,
+        Self::RuleSelect,
+        Self::RuleProfile,
+        Self::RuleWarrior,
+        Self::RuleList,
+        Self::RuleItem,
+        Self::RuleAbility,
+        Self::RuleProgression,
+        Self::RuleCopy,
+        Self::RuleRemove,
+        Self::RuleCreateWarband,
+        Self::RuleStartingGear,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -174,6 +197,17 @@ impl Action {
             Self::NewAbility => "Define new skill / spell / prayer",
             Self::GrantAbility => "Record a learned skill (no XP advance)",
             Self::AiRequest => "Ask the AI assistant",
+            Self::RuleSelect => "Choose rules profile",
+            Self::RuleProfile => "Define rules profile / funding / limits",
+            Self::RuleWarrior => "Define Hero / Henchman / Hired Sword",
+            Self::RuleList => "Define equipment list",
+            Self::RuleItem => "Define equipment and list membership",
+            Self::RuleAbility => "Define skill / spell / prayer and access",
+            Self::RuleProgression => "Define XP progression thresholds",
+            Self::RuleCopy => "Copy rules profile",
+            Self::RuleRemove => "Remove unused rule definition",
+            Self::RuleCreateWarband => "Create warband from authored rules",
+            Self::RuleStartingGear => "Define starting equipment / quantities",
         }
     }
 }
@@ -313,6 +347,7 @@ pub struct Form {
     pub review_scroll: u16,
     pub warband_id: Option<String>,
     pub automatic_reason: bool,
+    pub rule_id: Option<String>,
 }
 #[derive(Default)]
 pub struct Selection {
@@ -322,6 +357,9 @@ pub struct Selection {
     pub snapshot: Option<String>,
     pub note: Option<String>,
     pub stage: Option<String>,
+    pub rule_profile: Option<String>,
+    pub rule_record: Option<String>,
+    pub rule_kind: Option<String>,
 }
 fn opts(values: &[&str]) -> Vec<Choice> {
     values.iter().map(|v| Choice::new(*v, *v)).collect()
@@ -569,6 +607,22 @@ impl Form {
                 .collect::<Vec<_>>()
         };
         let mut fields = match action {
+            Action::RuleSelect
+            | Action::RuleProfile
+            | Action::RuleWarrior
+            | Action::RuleList
+            | Action::RuleItem
+            | Action::RuleAbility
+            | Action::RuleProgression
+            | Action::RuleCopy
+            | Action::RuleRemove
+            | Action::RuleCreateWarband
+            | Action::RuleStartingGear => Self::rule_fields(
+                action,
+                db,
+                selection.rule_profile.as_deref().or(profile),
+                selection,
+            ),
             Action::NewEquipment => vec![
                 text(
                     "name",
@@ -1443,7 +1497,7 @@ impl Form {
             "",
             "Optional note; restoring history requires a reason.",
         ));
-        if action == Action::AiRequest {
+        if matches!(action, Action::AiRequest | Action::RuleSelect) {
             fields.retain(|f| !matches!(f.key, "date" | "reason"));
         }
         let cursor = fields.first().map_or(0, |f| f.value.chars().count());
@@ -1458,6 +1512,7 @@ impl Form {
             review_scroll: 0,
             warband_id: wb.map(str::to_string),
             automatic_reason: true,
+            rule_id: selection.rule_record.clone(),
         };
         form.refresh_limits(db);
         form
@@ -1525,6 +1580,10 @@ impl Form {
         }
     }
     pub fn command(&self) -> Result<Command> {
+        if self.action == Action::RuleSelect {
+            self.required("profile")?;
+            return self.rule_command();
+        }
         if self.action == Action::AiRequest {
             return Ok(Command::Ai {
                 prompt: self.required("prompt")?,
@@ -1537,6 +1596,17 @@ impl Form {
         let opt = |key| self.optional(key);
         let flag = |key| self.value(key) == "true";
         Ok(match self.action {
+            Action::RuleSelect
+            | Action::RuleProfile
+            | Action::RuleWarrior
+            | Action::RuleList
+            | Action::RuleItem
+            | Action::RuleAbility
+            | Action::RuleProgression
+            | Action::RuleCopy
+            | Action::RuleRemove
+            | Action::RuleCreateWarband
+            | Action::RuleStartingGear => return self.rule_command(),
             Action::NewEquipment => Command::AddEquipment {
                 name: req("name")?,
                 cost: self.num("cost")?,
@@ -1803,6 +1873,7 @@ impl Form {
     pub fn impact(&self, store: &Store, wb: Option<&str>) -> Result<String> {
         let db = &store.db;
         match self.action {
+            Action::RuleSelect | Action::RuleProfile | Action::RuleWarrior | Action::RuleList | Action::RuleItem | Action::RuleAbility | Action::RuleProgression | Action::RuleCopy | Action::RuleRemove | Action::RuleCreateWarband | Action::RuleStartingGear => self.rule_impact(store),
             Action::Hire | Action::Buy | Action::Sell => {
                 let quantity:u32=self.num("quantity")?;
                 ensure!(quantity>0,"Quantity must be positive");

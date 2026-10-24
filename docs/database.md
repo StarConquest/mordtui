@@ -52,8 +52,10 @@ records as arrays named after each table and rejects unknown fields.
 - `profiles` → `types`, `items`, `abilities`, `thresholds` is the rules hierarchy.
   Type stats are strings supporting numeric or random values. `caps` references
   a type/characteristic. `permissions` links a type (or promoted Hero unit) to
-  abilities: kind `ability` or `starting-ability`. Legacy `item` permissions are
-  converted when data is loaded/imported.
+  abilities: kind `ability` or `starting-ability`. Kind `starting-item` records
+  an included equipment item and `quantity` per model on recruitment. Quantities
+  default to one for older CSV headers/JSON; starting type/item pairs are unique.
+  Legacy `item` permissions are converted when data is loaded/imported.
 - `equipment_lists` defines named, profile-scoped lists. `equipment_list_items`
   joins lists to items with unique `(list_id, item_id)` pairs; one item may be on
   several lists. `equipment_list_assignments` has one `(entity_id, list_id)` per
@@ -130,8 +132,9 @@ local warband bookkeeping. A future compactor must preserve referenced history.
 Schema changes must ship explicit migrations; this version rejects unsupported
 profile schema versions and invalid/unknown table fields.
 
-Rule folders contain the seven rules tables only: profiles, types, items,
-permissions, abilities, caps and thresholds. Author new IDs/content versions for
+Rule folders contain profiles, types, items, permissions, abilities, caps and
+thresholds, plus equipment_lists, equipment_list_items and
+equipment_list_assignments. The latter three remain optional for legacy folders. Author new IDs/content versions for
 changes. Validate with `mordheim rules FOLDER`; errors identify the table or
 invalid reference. Source and classification are attached to profiles, with
 ability source/description fields for specific mechanics. Scenario, injury,
@@ -154,3 +157,19 @@ each ordinary action retains its AI-assisted event. Existing generations must
 match exactly. Export artifacts are kept in the disposable directory until approval;
 file conflicts or stale approvals do not publish the batch. Provider credentials
 and workbench conversation state are not written to campaign tables.
+
+
+The Rules editor and `rulebook` commands can author these records directly,
+without an existing warband or external rules folder. `rulebook schema` prints
+strict JSON templates; `rulebook save` accepts a tagged `{kind,data}` definition.
+An empty ID creates a record and an existing ID edits it. Profile copies remap
+all catalog, permission, cap, progression and list references. Definition deletion
+checks dependencies; edits never overwrite historical generation files.
+
+Profiles and warrior types have an optional `description` column for manually
+adjudicated rules. Warrior `leader` and `free_dagger` columns are optional booleans:
+blank legacy values retain the Captain/free-dagger conventions; authored values
+are explicit. Starting equipment grants are separate from list eligibility and
+use zero-cost find ledger entries. Included items cover reinforcement loadout
+needs before consuming stash; any surplus remains unassigned. Changing defaults
+retains existing allocations, transactions, earned XP/advances and innate grants.

@@ -268,3 +268,35 @@ fn equipment_list_tools_remain_proposals_until_player_approval() {
     assert!(!store.db.equipment_allowed("youngblood-two", &item.id));
     assert_eq!(store.db.events.len(), before.events.len() + 4);
 }
+
+#[test]
+fn complete_rule_authoring_commands_require_review_and_player_approval() {
+    let (_dir, mut store) = setup();
+    let mut definition = mordtui::rules::editor::templates()["profile"].clone();
+    definition["data"]["name"] = "AI authored draft".into();
+    definition["data"]["description"] = "Campaign-specific rules recorded by the player.".into();
+    let payload = definition.to_string();
+    let proposal = plan(&[&["rulebook", "save", &payload]]);
+    let before = store.db.clone();
+    let reviewed = review(&store, Some("example-warband"), &proposal).unwrap();
+    assert_eq!(store.db, before);
+    assert!(reviewed.report.contains("AI authored draft"));
+    reviewed.approve(&mut store).unwrap();
+    let profile = store
+        .db
+        .profiles
+        .iter()
+        .find(|p| p.name == "AI authored draft")
+        .unwrap();
+    let mut warrior = mordtui::rules::editor::templates()["warrior"].clone();
+    warrior["data"]["warrior"]["profile_id"] = profile.id.clone().into();
+    warrior["data"]["warrior"]["name"] = "New captain".into();
+    let payload = warrior.to_string();
+    let proposal = plan(&[&["rulebook", "save", &payload]]);
+    let before = store.db.clone();
+    let reviewed = review(&store, Some("example-warband"), &proposal).unwrap();
+    assert_eq!(store.db, before);
+    reviewed.approve(&mut store).unwrap();
+    assert!(store.db.types.iter().any(|t| t.name == "New captain"));
+    assert_eq!(store.db.warbands, before.warbands);
+}

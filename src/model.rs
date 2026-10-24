@@ -4,6 +4,9 @@ use uuid::Uuid;
 mod equipment;
 
 pub const SCHEMA: u32 = 1;
+fn default_permission_quantity() -> u32 {
+    1
+}
 pub const STATS: [&str; 9] = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld"];
 pub const STEPS: [&str; 10] = [
     "injuries",
@@ -20,10 +23,10 @@ pub const STEPS: [&str; 10] = [
 pub fn id() -> String {
     Uuid::new_v4().to_string()
 }
-macro_rules! row { ($name:ident { $($field:ident : $ty:ty),* $(,)? }) => {
+macro_rules! row { ($name:ident { $($(#[$meta:meta])* $field:ident : $ty:ty),* $(,)? }) => {
     #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
     #[serde(deny_unknown_fields)]
-    pub struct $name { $(pub $field: $ty),* }
+    pub struct $name { $($(#[$meta])* pub $field: $ty),* }
 }; }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -54,7 +57,9 @@ row!(Profile {
     max_members: u32,
     max_heroes: u32,
     allow_debt: bool,
-    initial_advance_cost: i64
+    initial_advance_cost: i64,
+    #[serde(default)]
+    description: String
 });
 row!(WarriorType {
     id: String,
@@ -79,7 +84,10 @@ row!(WarriorType {
     w: String,
     i: String,
     a: String,
-    ld: String
+    ld: String,
+    #[serde(default)] description: String,
+    #[serde(default)] leader: Option<bool>,
+    #[serde(default)] free_dagger: Option<bool>
 });
 row!(Item {
     id: String,
@@ -94,7 +102,9 @@ row!(Permission {
     id: String,
     type_id: String,
     target_id: String,
-    kind: String
+    kind: String,
+    #[serde(default = "default_permission_quantity")]
+    quantity: u32
 });
 row!(EquipmentList {
     id: String,
@@ -624,6 +634,18 @@ impl Db {
             );
         }
         for p in &self.permissions {
+            if p.kind == "starting-item" {
+                ensure!(
+                    self.permissions
+                        .iter()
+                        .filter(|r| r.kind == p.kind
+                            && r.type_id == p.type_id
+                            && r.target_id == p.target_id)
+                        .count()
+                        == 1,
+                    "Duplicate starting equipment rule"
+                );
+            }
             ensure!(
                 self.types.iter().any(|t| t.id == p.type_id)
                     || self.units.iter().any(|u| u.id == p.type_id),
@@ -633,6 +655,14 @@ impl Db {
             ensure!(
                 match p.kind.as_str() {
                     "item" => self.items.iter().any(|i| i.id == p.target_id),
+                    "starting-item" =>
+                        p.quantity > 0
+                            && p.quantity <= 1_000_000
+                            && self.types.iter().any(|t| t.id == p.type_id
+                                && self
+                                    .items
+                                    .iter()
+                                    .any(|i| i.id == p.target_id && i.profile_id == t.profile_id)),
                     "ability" | "starting-ability" =>
                         self.abilities.iter().any(|i| i.id == p.target_id),
                     _ => false,

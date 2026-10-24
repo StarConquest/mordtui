@@ -32,6 +32,7 @@ fn legacy_access_converts_deterministically_to_shared_lists_and_keeps_unit_excep
         type_id: "arrows-one-unit".into(),
         target_id: "personal-weapon".into(),
         kind: "item".into(),
+        quantity: 1,
     });
     let mut db = original.clone();
     db.normalize_equipment_lists().unwrap();

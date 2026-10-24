@@ -2,6 +2,7 @@ use crate::model::*;
 use anyhow::{Result, ensure};
 use serde::de::DeserializeOwned;
 use std::path::Path;
+pub mod editor;
 fn read<T: DeserializeOwned>(dir: &Path, name: &str) -> Result<Vec<T>> {
     Ok(csv::Reader::from_path(dir.join(format!("{name}.csv")))?
         .deserialize()

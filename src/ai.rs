@@ -52,7 +52,7 @@ pub fn propose(db: &Db, warband: Option<&str>, prompt: &str) -> Result<plan::Pla
 
 pub fn context(db: &Db, warband: Option<&str>) -> Value {
     let Some(w) = warband.and_then(|id| db.warbands.iter().find(|w| w.id == id)) else {
-        return json!({"state":"No warband selected", "campaigns":db.campaigns, "profiles":db.profiles});
+        return json!({"state":"No warband selected", "campaigns":db.campaigns, "profiles":db.profiles,"rule_definition_templates":crate::rules::editor::templates()});
     };
     let mut selected = db.clone();
     selected.warbands.retain(|r| r.id == w.id);
@@ -118,7 +118,7 @@ pub fn context(db: &Db, warband: Option<&str>) -> Value {
     selected.dice.clear();
     selected.snapshots.retain(|s| s.warband_id == w.id);
     selected.events.clear();
-    json!({"summary":summary(db,&w.id),"selected_warband_and_rules":selected,"privacy":"No unrelated warbands, global history, credentials or filesystem contents included"})
+    json!({"summary":summary(db,&w.id),"selected_warband_and_rules":selected,"rule_definition_templates":crate::rules::editor::templates(),"privacy":"No unrelated warbands, global history, credentials or filesystem contents included"})
 }
 
 fn complete(preamble: &str, prompt: &str) -> Result<String> {

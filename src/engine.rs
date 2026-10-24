@@ -470,6 +470,7 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
             | Command::Warband { .. }
             | Command::Select { .. }
             | Command::Rules { .. }
+            | Command::Rulebook(_)
             | Command::List { .. }
             | Command::Validate
             | Command::Import { .. }
@@ -480,6 +481,10 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
     let mut db = store.db.clone();
     let mut output = json!({"ok":true});
     match cmd {
+        Command::Rulebook(RulebookCommand::Schema) => return Ok(rules::editor::templates()),
+        Command::Rulebook(command) => {
+            output = rules::editor::execute(&mut db, command, &c.date, &c.reason)?
+        }
         Command::List { what, filter } => return view(store, cli, what, filter.as_deref()),
         Command::Validate => {
             db.validate()?;
@@ -583,6 +588,7 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                     type_id: target,
                     target_id: ability.id.clone(),
                     kind: "ability".into(),
+                    quantity: 1,
                 });
             }
             output = json!({"ability":ability});
@@ -857,17 +863,29 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
-            for a in &loadout {
-                if db
+            let mut starting = db
+                .permissions
+                .iter()
+                .filter(|p| p.type_id == t.id && p.kind == "starting-item")
+                .map(|p| (p.target_id.clone(), p.quantity))
+                .collect::<std::collections::BTreeMap<_, _>>();
+            if t.free_dagger.unwrap_or(true)
+                && let Some(d) = db
                     .items
                     .iter()
-                    .any(|i| i.id == a.item_id && i.name == "Dagger")
-                {
-                    continue;
-                }
+                    .find(|i| i.profile_id == t.profile_id && i.name == "Dagger")
+            {
+                starting.entry(d.id.clone()).or_insert(1);
+            }
+            for a in &loadout {
+                let copies = a
+                    .quantity
+                    .saturating_sub(starting.get(&a.item_id).copied().unwrap_or(0));
+                let required = copies
+                    .checked_mul(*count)
+                    .context("Replacement equipment quantity overflow")?;
                 ensure!(
-                    db.owned(&c.wb, &a.item_id) - db.assigned(&c.wb, &a.item_id)
-                        >= a.quantity * count,
+                    db.owned(&c.wb, &a.item_id) - db.assigned(&c.wb, &a.item_id) >= required,
                     "Not enough replacement equipment in stash"
                 );
             }
@@ -889,11 +907,6 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                     });
                 }
             }
-            let dagger = db
-                .items
-                .iter()
-                .find(|i| i.profile_id == t.profile_id && i.name == "Dagger")
-                .cloned();
             for n in 0..*count {
                 let m = Member {
                     id: id(),
@@ -906,15 +919,15 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                     status: "active".into(),
                     missed_games: 0,
                 };
-                if let Some(d) = &dagger {
-                    holding(&mut db, &c.wb, &d.id, 1)?;
-                    ledger(&mut db, &c, "find", (&d.id, &m.id), 1, 0, 0);
-                    if !loadout.iter().any(|a| a.item_id == d.id) {
+                for (item, quantity) in &starting {
+                    holding(&mut db, &c.wb, item, i64::from(*quantity))?;
+                    ledger(&mut db, &c, "find", (item, &m.id), *quantity, 0, 0);
+                    if group.is_none() {
                         db.allocations.push(Allocation {
                             id: id(),
                             member_id: m.id.clone(),
-                            item_id: d.id.clone(),
-                            quantity: 1,
+                            item_id: item.clone(),
+                            quantity: *quantity,
                         });
                     }
                 }
@@ -926,7 +939,7 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                         quantity: a.quantity,
                     });
                 }
-                if t.name == "Captain" && wb(&db, &c.wb).leader_id.is_empty() {
+                if t.leader.unwrap_or(t.name == "Captain") && wb(&db, &c.wb).leader_id.is_empty() {
                     db.warbands
                         .iter_mut()
                         .find(|w| w.id == c.wb)
@@ -1114,6 +1127,7 @@ pub fn execute(store: &mut Store, cli: &Cli) -> Result<Value> {
                         type_id: new.id.clone(),
                         target_id: a.id.clone(),
                         kind: "ability".into(),
+                        quantity: 1,
                     });
                 }
             }

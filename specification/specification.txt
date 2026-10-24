@@ -1,6 +1,6 @@
 # Mordtui specification
 
-Status: approved requirements; interaction quality revisions, 2026-10-20.
+Status: approved requirements; rules-authoring workspace, 2026-10-24.
 “Shall” identifies a requirement; “should” identifies a preference. These are
 product requirements, not a claim that the current Rust scaffold implements them.
 Requirement IDs are stable references for implementation and acceptance checks.
@@ -63,8 +63,10 @@ Mutations shall expose validation failures and exit nonzero on failure; ambiguou
 names shall never select an arbitrary entity. Help shall document date, reason,
 campaign, and warband selection options. Exact command spelling remains a design choice.
 TUI-01. The TUI shall have a summary, roster, warrior/group detail, inventory,
-ledger, battle dashboard, post-battle checklist, history/snapshot view and AI
-assistant workbench (tab 7). Main navigation shall consistently support 1–7.
+ledger, battle dashboard, post-battle checklist, history/snapshot view, rules
+authoring workspace (tab 7), and optional AI assistant workbench (tab 8). Main
+navigation shall support 1–7 without AI and 1–8 with it. Left/Right remains global;
+Tab/Shift-Tab changes pane focus inside the Post-battle and Rules workspaces.
 TUI-02. All workflows shall be keyboard accessible with visible shortcuts, search,
 filtering, contextual help, and recoverable form errors. Meaning shall not depend
 only on color. Small terminals shall scroll or show a useful minimum-size message.
@@ -264,6 +266,41 @@ Battle rows shall mark models with notes. F6 shall work from the injury report,
 and the report shall also show recent notes for the selected warrior. Every
 visible toolbar action shall identify its working keyboard shortcut, including
 Enter Details, find/lose, comparison and export.
+
+TUI-19. A Rules tab, also available through F7 and the empty-database welcome
+screen, shall support authoring complete rule profiles before any campaign or
+warband exists. A profile selector shall be independent of the active warband.
+Sections shall cover profile defaults, warrior types, equipment lists, items,
+skills/spells/prayers, XP progression, and starting equipment. The workspace shall
+support keyboard/mouse section and definition selection, filtering, details,
+creation, editing, copying, and deletion through reviewed forms. Long forms shall
+support automatic scrolling and Page Up/Down field navigation. Profile selection
+and cancelled edits shall not create journal mutations.
+Profile forms shall expose name, faction/subfaction, content version, source,
+classification, funding/bonus, roster/Hero caps, debt, initial-advance cost and
+manual rule descriptions. Warrior forms shall expose all nine numeric/random
+characteristics, role (Hero, Henchman, Hired Sword or Dramatis Personae), hire and
+upkeep costs, starting XP/XP eligibility, recruitment and group limits, rating,
+roster/income/battle counting, leader recruitment, equipment list, learnable and
+innate abilities, characteristic caps, and special rules/contracts. Equipment and
+ability forms shall expose their catalog details and multiple list/type access
+assignments. Progression shall allow role-specific XP thresholds, including empty
+progression. Starting equipment rules shall specify each item's quantity per
+recruited model and zero-cost acquisition. Surplus starting gear for an existing
+group shall go to stash while preserving identical group loadouts; stock checks
+shall account for included equipment before requiring replacement stash copies.
+An authored type's automatic leader and free-dagger behavior shall be explicit;
+older profiles shall retain the legacy Captain/free-dagger behavior. Other manual
+mechanics shall be describable without claiming scripted rules execution.
+The editor shall create a playable warband and optional campaign directly from a
+stored profile, recording initial funding exactly once, without reading rules
+files. Complete profile copies shall have fresh IDs and remapped dependencies.
+Edits shall retain stable IDs, actual transactions, carried equipment, earned
+advances and historical generations. Reviews shall explain current shared-profile
+effects versus future recruitment/funding defaults. Cross-profile references,
+invalid values, duplicate definitions and deleting referenced definitions shall
+be rejected atomically. The CLI and AI shall use the same authoring commands;
+AI changes retain the separate explicit player-approval requirement.
 
 # Rules definitions and campaign profiles
 
@@ -494,8 +531,8 @@ available after members die or leave.
 AI-01. Rig integration shall support configurable endpoint, model, timeouts, and
 credentials via environment or a separate secret store. Logs shall redact secrets.
 The AI assistant tab, menu action and associated help shall be present only when
-the installed program includes AI support. Other installations shall offer six
-tabs, ignore the unavailable seventh-tab shortcut and cycle across available tabs.
+the installed program includes AI support. Other installations shall offer seven
+tabs, ignore the unavailable eighth-tab shortcut and cycle across available tabs.
 The in-app workbench shall not present compilation commands or feature flags.
 AI-02. AI may explain recorded state, draft names/notes, suggest recruitment or
 purchases, and propose structured action plans using supplied rules and resources.
@@ -651,6 +688,19 @@ saves shall resolve the same access through deterministic shared lists, preservi
 group-specific exceptions and original historical files. Newly written list tables
 shall participate in checksum validation. AI plans shall use the same commands
 and require the existing explicit player approval before list changes apply.
+
+AC-28. Starting from an empty database and without importing files, use Rules to
+author a profile, Hero/leader, Henchman group, Hired Sword, equipment list, items,
+learnable/innate skills, caps, XP thresholds and included equipment quantities.
+Create a campaign/warband, hire the defined models and start a battle. Verify
+funding, costs, income/roster flags, leader choice, skill access, starting stock,
+contract upkeep, rule descriptions, and persistence after reopening. At 80x24,
+exercise mouse and keyboard navigation, long-form paging, cancel, edit, profile
+selection, copying and deletion. Copy/edit without affecting original profile
+users; invalid edits/dependency deletions shall leave CURRENT and history intact.
+Legacy CSV/JSON profiles shall preserve behavior with new optional columns.
+Run both AI configurations: Rules is always tab 7, optional AI is tab 8, and
+post-battle/global navigation and AI approval remain functional.
 
 # Research sources and interpretation
 

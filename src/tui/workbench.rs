@@ -34,7 +34,7 @@ impl App {
             );
         });
         self.ai.receiver = Some(receiver);
-        self.tab = 6;
+        self.tab = AI_TAB;
         self.overlay = Overlay::None;
     }
     pub(super) fn poll_ai(&mut self, store: &Store) {
@@ -55,12 +55,12 @@ impl App {
                         self.ai.report
                     ));
                     self.ai.plan = Some(plan);
-                    self.message = if self.ai.generation == store.generation { "AI proposal ready on tab 7. R validates; approval is separate." } else { "Campaign changed during the AI request; request a revised plan before approving." }.into();
+                    self.message = if self.ai.generation == store.generation { "AI proposal ready on tab 8. R validates; approval is separate." } else { "Campaign changed during the AI request; request a revised plan before approving." }.into();
                 }
                 Err(error) => {
                     self.ai.report =
                         format!("AI request failed. {error}\nNo campaign changes applied.");
-                    self.message = "AI request failed; see tab 7.".into();
+                    self.message = "AI request failed; see tab 8.".into();
                 }
             }
         }
@@ -127,7 +127,7 @@ impl App {
                         .filter(|w| store.db.warbands.iter().any(|r| r.id == *w))
                         .or_else(|| store.db.warbands.first().map(|w| w.id.clone()))
                 });
-                self.selected = [0; 7];
+                self.selected = [0; 8];
                 self.filter.clear();
                 self.selected[4] = self
                     .steps(&store.db)

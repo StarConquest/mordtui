@@ -3,6 +3,7 @@ mod catalog;
 mod forms;
 mod injuries;
 mod post;
+mod rulebook;
 mod workbench;
 use post::PostFocus;
 mod views;
@@ -36,9 +37,12 @@ const TABS: &[&str] = &[
     "Battle",
     "Post-battle",
     "Journal",
+    "Rules",
     #[cfg(feature = "ai")]
     "AI assistant",
 ];
+const RULES_TAB: usize = 6;
+const AI_TAB: usize = 7;
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Journal {
     Ledger,
@@ -70,6 +74,11 @@ enum Hit {
     AiReview,
     AiApprove,
     AiReject,
+    RuleSection(usize),
+    RuleNew,
+    RuleEdit,
+    RuleDetails,
+    RuleDelete,
 }
 struct Picker {
     field: usize,
@@ -100,8 +109,8 @@ enum Overlay {
 }
 struct App {
     tab: usize,
-    selected: [usize; 7],
-    tables: [TableState; 7],
+    selected: [usize; 8],
+    tables: [TableState; 8],
     filter: String,
     post_focus: PostFocus,
     post_selected: usize,
@@ -114,12 +123,13 @@ struct App {
     hits: Vec<(Rect, Hit)>,
     suspended_form: Option<Form>,
     ai: workbench::Workbench,
+    rules: rulebook::State,
 }
 impl App {
     fn new(store: &Store, cli: &Cli) -> Self {
         let mut app = Self {
             tab: 1,
-            selected: [0; 7],
+            selected: [0; 8],
             tables: std::array::from_fn(|_| TableState::default()),
             filter: String::new(),
             post_focus: PostFocus::Stages,
@@ -134,6 +144,7 @@ impl App {
             hits: vec![],
             suspended_form: None,
             ai: workbench::Workbench::default(),
+            rules: rulebook::State::default(),
         };
         app.selected[4] = app
             .steps(&store.db)
@@ -223,11 +234,15 @@ impl App {
             3 => self.participants(db).len(),
             4 => self.steps(db).len(),
             5 => self.journal_rows(db).len(),
+            RULES_TAB => self.rule_rows(db).len(),
             _ => 0,
         }
     }
     fn selection(&self, db: &Db) -> Selection {
-        let mut s = Selection::default();
+        let mut s = Selection {
+            rule_profile: self.rule_profile(db).map(|p| p.id.clone()),
+            ..Selection::default()
+        };
         match self.tab {
             1 => {
                 if let Some(u) = self.units(db).get(self.selected[1]) {
@@ -285,6 +300,13 @@ impl App {
                         _ => {}
                     }
                 }
+            }
+            RULES_TAB => {
+                s.rule_record = self
+                    .rule_rows(db)
+                    .get(self.selected[RULES_TAB])
+                    .map(|r| r.id.clone());
+                s.rule_kind = Some(rulebook::KINDS[self.rules.section].into());
             }
             _ => {}
         }
@@ -398,15 +420,26 @@ impl App {
             .collect()
     }
     fn open(&mut self, action: Action, store: &Store, cli: &Cli) {
+        let mut selection = self.selection(&store.db);
+        if matches!(
+            action,
+            Action::RuleProfile
+                | Action::RuleWarrior
+                | Action::RuleList
+                | Action::RuleItem
+                | Action::RuleAbility
+                | Action::RuleProgression
+                | Action::RuleStartingGear
+        ) {
+            selection.rule_record = None;
+        }
+        self.open_selected(action, store, cli, selection);
+    }
+    fn open_selected(&mut self, action: Action, store: &Store, cli: &Cli, selection: Selection) {
         if action == Action::AiRequest && !cfg!(feature = "ai") {
             return;
         }
-        let mut form = Form::new(
-            action,
-            store,
-            self.wb.as_deref(),
-            &self.selection(&store.db),
-        );
+        let mut form = Form::new(action, store, self.wb.as_deref(), &selection);
         if let Some(date) = &cli.date {
             form.set("date", date);
         }
@@ -437,6 +470,21 @@ impl App {
         self.picker = None;
     }
     fn actions(&self, db: &Db) -> Vec<Action> {
+        if self.tab == RULES_TAB {
+            return vec![
+                Action::RuleSelect,
+                Action::RuleProfile,
+                Action::RuleWarrior,
+                Action::RuleList,
+                Action::RuleItem,
+                Action::RuleAbility,
+                Action::RuleProgression,
+                Action::RuleStartingGear,
+                Action::RuleCopy,
+                Action::RuleRemove,
+                Action::RuleCreateWarband,
+            ];
+        }
         if self.tab == 4 {
             return self.post_bindings(db).iter().map(|b| b.action).collect();
         }
@@ -593,6 +641,14 @@ impl App {
             }
         };
         let action = f.action;
+        if action == Action::RuleSelect {
+            self.rules.profile = Some(f.value("profile").into());
+            self.selected[RULES_TAB] = 0;
+            self.filter.clear();
+            self.overlay = Overlay::None;
+            self.message = "Rules profile selected".into();
+            return;
+        }
         if action == Action::AiRequest {
             let prompt = f.value("prompt").to_string();
             self.ask_ai(store, prompt);
@@ -632,6 +688,24 @@ impl App {
         };
         match result {
             Ok(value) => {
+                if action.is_rulebook() {
+                    self.rules.profile = value["profile_id"]
+                        .as_str()
+                        .filter(|p| !p.is_empty())
+                        .map(str::to_string);
+                    self.filter.clear();
+                    if let Some(id) = value["record_id"].as_str() {
+                        self.selected[RULES_TAB] = self
+                            .rule_rows(&store.db)
+                            .iter()
+                            .position(|r| r.id == id)
+                            .unwrap_or(0);
+                    }
+                    if action == Action::RuleCreateWarband {
+                        self.wb = value["warband_id"].as_str().map(str::to_string);
+                        self.tab = 1;
+                    }
+                }
                 if self.restore_catalog_form(action, &value, store) {
                     return;
                 }
@@ -656,7 +730,7 @@ impl App {
                         },
                     )
                     .ok();
-                    self.selected = [0; 7];
+                    self.selected = [0; 8];
                     self.filter.clear();
                 }
                 if (action == Action::Xp || action == Action::Advance)
@@ -1004,6 +1078,11 @@ impl App {
     }
     fn click(&mut self, hit: Hit, store: &mut Store, cli: &Cli) {
         match hit {
+            Hit::RuleSection(i) => self.rule_section(i),
+            Hit::RuleNew => self.rule_new(store, cli),
+            Hit::RuleEdit => self.rule_edit(store, cli),
+            Hit::RuleDetails => self.rule_details(store),
+            Hit::RuleDelete => self.rule_delete(store, cli),
             Hit::PostTarget(i) => {
                 self.post_focus = PostFocus::Targets;
                 self.post_selected = i;
@@ -1046,6 +1125,9 @@ impl App {
                 }
             }
             Hit::Row(i) => {
+                if self.tab == RULES_TAB {
+                    self.rules.records_focus = true;
+                }
                 self.selected[self.tab] = i;
                 if self.tab == 4 {
                     self.post_focus = PostFocus::Stages;
@@ -1139,7 +1221,13 @@ impl App {
         {
             return true;
         }
-        if self.tab == 6 && matches!(self.overlay, Overlay::None) {
+        if self.tab == RULES_TAB
+            && matches!(self.overlay, Overlay::None)
+            && self.rule_key(key, store, cli)
+        {
+            return true;
+        }
+        if self.tab == AI_TAB && matches!(self.overlay, Overlay::None) {
             match key.code {
                 KeyCode::Char('n') => {
                     self.open(Action::AiRequest, store, cli);
@@ -1238,8 +1326,10 @@ impl App {
                     return true;
                 }
                 KeyCode::Char(c)
-                    if !['q', 'a', '/', '?', ':', '1', '2', '3', '4', '5', '6', '7']
-                        .contains(&c) =>
+                    if ![
+                        'q', 'a', '/', '?', ':', '1', '2', '3', '4', '5', '6', '7', '8',
+                    ]
+                    .contains(&c) =>
                 {
                     if let Some(b) = self.post_bindings(&store.db).iter().find(|b| b.key == c) {
                         self.activate(b.action, store, cli);
@@ -1347,6 +1437,14 @@ impl App {
                 }
                 match key.code {
                     KeyCode::Esc => self.cancel_form(),
+                    KeyCode::PageDown => {
+                        f.focus = (f.focus + 6).min(f.fields.len() - 1);
+                        f.cursor = f.fields[f.focus].value.chars().count();
+                    }
+                    KeyCode::PageUp => {
+                        f.focus = f.focus.saturating_sub(6);
+                        f.cursor = f.fields[f.focus].value.chars().count();
+                    }
                     KeyCode::Tab | KeyCode::Down => {
                         f.focus = (f.focus + 1) % f.fields.len();
                         f.cursor = f.fields[f.focus].value.chars().count();
@@ -1505,7 +1603,7 @@ impl App {
                 KeyCode::Char('q') => return false,
                 KeyCode::Tab => self.switch_tab((self.tab + 1) % TABS.len()),
                 KeyCode::BackTab => self.switch_tab((self.tab + TABS.len() - 1) % TABS.len()),
-                KeyCode::Char(c @ '1'..='7') => self.switch_tab(c as usize - '1' as usize),
+                KeyCode::Char(c @ '1'..='8') => self.switch_tab(c as usize - '1' as usize),
                 KeyCode::Left => self.switch_tab((self.tab + TABS.len() - 1) % TABS.len()),
                 KeyCode::Right => self.switch_tab((self.tab + 1) % TABS.len()),
                 KeyCode::Down => self.move_row(&store.db, 1),
@@ -1532,6 +1630,7 @@ impl App {
                 KeyCode::F(4) => self.activate(Action::Injuries, store, cli),
                 KeyCode::F(5) => self.battle_lifecycle(store, cli),
                 KeyCode::F(6) => self.model_notes(&store.db),
+                KeyCode::F(7) => self.switch_tab(RULES_TAB),
                 KeyCode::Char('?') => {
                     self.overlay = Overlay::Detail {
                         title: "Keyboard and mouse help".into(),
@@ -1657,6 +1756,23 @@ fn changed(f: &mut Form, store: &Store) {
         f.set("condition", p.condition);
         f.set("kills", p.kills.to_string());
         f.set("objectives", p.objectives.to_string());
+    }
+    if f.action == Action::RuleProgression && key == "role" {
+        let mut values = db
+            .thresholds
+            .iter()
+            .filter(|t| t.profile_id == f.value("profile") && t.role == f.value("role"))
+            .map(|t| t.xp)
+            .collect::<Vec<_>>();
+        values.sort();
+        f.set(
+            "thresholds",
+            values
+                .iter()
+                .map(u32::to_string)
+                .collect::<Vec<_>>()
+                .join(", "),
+        );
     }
     if f.action == Action::RemoveKill && key == "member" {
         let battle = db.battles.iter().rev().find(|b| {
@@ -1905,15 +2021,15 @@ fn help_text() -> String {
         HELP.into()
     } else {
         HELP.split("\n\n")
-            .filter(|paragraph| !paragraph.starts_with("AI tab 7:"))
+            .filter(|paragraph| !paragraph.starts_with("AI tab 8:"))
             .collect::<Vec<_>>()
             .join("\n\n")
-            .replace("1–7", "1–6")
-            .replace(" Tab 7: AI assistant workbench.", "")
+            .replace("1–8", "1–7")
+            .replace(" Tab 8: AI assistant workbench.", "")
     }
 }
 
-const HELP: &str = "Mordtui session controls\n\n1–7 or Left/Right: change tabs. Tab/Shift-Tab also changes tabs outside Post-battle. Up/Down: select a row. Enter: unit dossier / battle form / stage form. Hover model rows to preview recent notes; click tabs, rows, action buttons and form fields. Mouse wheel scrolls lists.\n\nA: searchable menu of every session action. H: hire. P: purchase. E: equip. X: experience. U: advance. N: note. F2: switch warband. F3: campaign rules (including persistent Skip Dramatis Personae). F4: injury list. F5: prepare/start/end battle. F6: selected model/unit notes. Tab 7: AI assistant workbench.\n\nBattle: -/+ adjust current wounds by one, K opens a kill credit with the opponent name; J chooses a credit to remove; ]/[ adjusts objectives. O marks out of action, W opens all battle counters. OOA is not death. F5 (or B) prepares, starts or ends the active battle. Rem is wounds remaining, separate from W. V expands all details and F6 opens notes.\n\nPost-battle: Up/Down initially browses all stages, including completed/future stages. Tab/Shift-Tab switches between stages and targets; Up/Down selects within the focused pane. Empty target lists return arrow navigation to stages. Left/Right keeps its global meaning: change main tabs. Enter acts on the selected target. Only the selected stage's visible shortcuts are enabled. Every pending stage offers C to complete and K to skip, even when browsing ahead. Rare searches: one per Hero not taken out of action; S records a specific item found/failed, P buys one found item. Dice stay on the tabletop: record consequences directly.\n\nWarband: G assigns equipment lists to types, groups or models. Create shared lists in A Actions. D dismisses a warrior (choose whether gear returns to stash or is lost). S defines a skill, L records a learned skill, C defines equipment. Pickers offer New equipment/skill and resume the original form. Stash: G changes the selected item's equipment lists; C defines equipment, F finds and L loses stock. Enter opens Details. Journal: C compares checkpoints; E exports.\n\nJournal opens on History. V cycles History / Snapshots / Injuries / Ledger / Notes. S creates a snapshot; F4 opens the injury list.\n\nForms: Tab/Shift-Tab or Up/Down changes field. Enter opens a searchable choice picker; type to filter it, then Enter selects. For checkboxes, Space/click toggles multiple choices, Enter accepts, Esc cancels, Ctrl-A selects all shown and Ctrl-U clears shown. Left/Right cycles single choices. Space toggles checkboxes. Typing first replaces a prefilled value, then edits your entry. Move the cursor first to edit a default in place. Backspace/Delete clears an untouched default. Text fields support Home/End, arrows and Ctrl-U. F10 or Ctrl-S reviews; Enter then applies. Esc backs out without saving. Errors retain your entries.\n\nAI tab 7: N sends a request; R validates every proposed action in a disposable copy. Y opens approval, then Y explicitly applies all actions; Esc cancels confirmation and D rejects. Changed campaign data invalidates approval; proposals never execute themselves.\n\nForms generate readable journal reasons from the action and values; type a replacement if desired. Common session actions never require command syntax or copied IDs. All forms share CLI validation and audited persistence. The optional : command prompt remains for advanced use. / filters a table; Esc clears it. Q quits. Every successful change is already saved.";
+const HELP: &str = "Mordtui session controls\n\n1–8 or Left/Right: change tabs. Tab/Shift-Tab changes tabs outside Post-battle and Rules; inside them it changes pane focus. Up/Down: select a row. Enter: unit dossier / battle form / stage form. Hover model rows to preview recent notes; click tabs, rows, action buttons and form fields. Mouse wheel scrolls lists.\n\nA: searchable menu of every session action. H: hire. P: purchase. E: equip. X: experience. U: advance. N: note. F2: switch warband. F3: campaign rules (including persistent Skip Dramatis Personae). F4: injury list. F5: prepare/start/end battle. F6: selected model/unit notes. F7 / Tab 7: Rules editor. Tab 8: AI assistant workbench.\n\nBattle: -/+ adjust current wounds by one, K opens a kill credit with the opponent name; J chooses a credit to remove; ]/[ adjusts objectives. O marks out of action, W opens all battle counters. OOA is not death. F5 (or B) prepares, starts or ends the active battle. Rem is wounds remaining, separate from W. V expands all details and F6 opens notes.\n\nPost-battle: Up/Down initially browses all stages, including completed/future stages. Tab/Shift-Tab switches between stages and targets; Up/Down selects within the focused pane. Empty target lists return arrow navigation to stages. Left/Right keeps its global meaning: change main tabs. Enter acts on the selected target. Only the selected stage's visible shortcuts are enabled. Every pending stage offers C to complete and K to skip, even when browsing ahead. Rare searches: one per Hero not taken out of action; S records a specific item found/failed, P buys one found item. Dice stay on the tabletop: record consequences directly.\n\nWarband: G assigns equipment lists to types, groups or models. Create shared lists in A Actions. D dismisses a warrior (choose whether gear returns to stash or is lost). S defines a skill, L records a learned skill, C defines equipment. Pickers offer New equipment/skill and resume the original form. Stash: G changes the selected item's equipment lists; C defines equipment, F finds and L loses stock. Enter opens Details. Journal: C compares checkpoints; E exports.\n\nRules (7 / F7): P selects a profile independently of the warband. Up/Down selects sections, Tab switches sections/definitions. N adds, E edits, V expands, D removes unused definitions, C copies a profile and W creates a warband from stored rules. Define profiles, warrior types, equipment lists, items, skills, XP thresholds and starting gear without a campaign or rules files.\n\nJournal opens on History. V cycles History / Snapshots / Injuries / Ledger / Notes. S creates a snapshot; F4 opens the injury list.\n\nForms: Tab/Shift-Tab or Up/Down changes field; PgUp/PgDn jumps through long forms. Enter opens a searchable choice picker; type to filter it, then Enter selects. For checkboxes, Space/click toggles multiple choices, Enter accepts, Esc cancels, Ctrl-A selects all shown and Ctrl-U clears shown. Left/Right cycles single choices. Space toggles checkboxes. Typing first replaces a prefilled value, then edits your entry. Move the cursor first to edit a default in place. Backspace/Delete clears an untouched default. Text fields support Home/End, arrows and Ctrl-U. F10 or Ctrl-S reviews; Enter then applies. Esc backs out without saving. Errors retain your entries.\n\nAI tab 8: N sends a request; R validates every proposed action in a disposable copy. Y opens approval, then Y explicitly applies all actions; Esc cancels confirmation and D rejects. Changed campaign data invalidates approval; proposals never execute themselves.\n\nForms generate readable journal reasons from the action and values; type a replacement if desired. Common session actions never require command syntax or copied IDs. All forms share CLI validation and audited persistence. The optional : command prompt remains for advanced use. / filters a table; Esc clears it. Q quits. Every successful change is already saved.";
 
 #[cfg(test)]
 mod tests;

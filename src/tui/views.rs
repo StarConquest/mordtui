@@ -29,7 +29,7 @@ fn centered(area: Rect, width: u16, height: u16) -> Rect {
         h,
     )
 }
-fn text(f: &mut Frame, area: Rect, title: impl Into<String>, body: impl Into<String>) {
+pub(super) fn text(f: &mut Frame, area: Rect, title: impl Into<String>, body: impl Into<String>) {
     f.render_widget(
         Paragraph::new(body.into())
             .wrap(Wrap { trim: false })
@@ -65,7 +65,7 @@ fn line_buttons(f: &mut Frame, app: &mut App, area: Rect, buttons: &[(&str, Hit)
     }
 }
 
-fn table(
+pub(super) fn table(
     f: &mut Frame,
     app: &mut App,
     area: Rect,
@@ -121,7 +121,22 @@ fn table(
     }
 }
 fn toolbar(app: &App, db: &Db) -> Vec<(String, Hit)> {
-    if app.tab == 6 {
+    if app.tab == RULES_TAB {
+        return vec![
+            ("P Profile".into(), Hit::Action(Action::RuleSelect)),
+            ("N New".into(), Hit::RuleNew),
+            ("E Edit".into(), Hit::RuleEdit),
+            ("V Details".into(), Hit::RuleDetails),
+            ("D Delete".into(), Hit::RuleDelete),
+            ("C Copy profile".into(), Hit::Action(Action::RuleCopy)),
+            (
+                "W Create warband".into(),
+                Hit::Action(Action::RuleCreateWarband),
+            ),
+            ("A Actions".into(), Hit::Menu),
+        ];
+    }
+    if app.tab == AI_TAB {
         return vec![
             ("N Ask assistant".into(), Hit::Action(Action::AiRequest)),
             ("R Review plan".into(), Hit::AiReview),
@@ -222,7 +237,7 @@ fn toolbar(app: &App, db: &Db) -> Vec<(String, Hit)> {
         ],
         _ => vec![
             ("F2 Warband", Hit::Action(Action::Switch)),
-            ("F3 Rules", Hit::Action(Action::CampaignRules)),
+            ("F3 Campaign", Hit::Action(Action::CampaignRules)),
             ("F4 Injuries", Hit::Action(Action::Injuries)),
             ("F5 Battle", Hit::BattleLifecycle),
             ("S Snapshot", Hit::Action(Action::Snapshot)),
@@ -298,7 +313,7 @@ pub(super) fn draw(f: &mut Frame, app: &mut App, store: &Store) {
                 i + 1,
                 if area.width < 105 {
                     [
-                        "Overview", "Warband", "Stash", "Battle", "Post", "Journal", "AI",
+                        "Home", "Roster", "Stash", "Battle", "Post", "Journal", "Rules", "AI",
                     ][i]
                 } else {
                     TABS[i]
@@ -318,7 +333,9 @@ pub(super) fn draw(f: &mut Frame, app: &mut App, store: &Store) {
     let buttons: Vec<_> = buttons.iter().map(|(s, h)| (s.as_str(), *h)).collect();
     line_buttons(f, app, regions[2], &buttons);
     // Overlay hit regions replace the underlying hit map below.
-    if app.tab == 6 {
+    if app.tab == RULES_TAB {
+        app.draw_rules(f, store, regions[3]);
+    } else if app.tab == AI_TAB {
         workbench(f, app, regions[3]);
     } else if app.warband(db).is_none() {
         welcome(f, app, regions[3]);
@@ -338,7 +355,9 @@ pub(super) fn draw(f: &mut Frame, app: &mut App, store: &Store) {
             .style(Style::default().fg(Color::Yellow)),
         regions[4],
     );
-    let hint = if app.tab == 6 {
+    let hint = if app.tab == RULES_TAB {
+        "Tab sections/records · ↑↓ select · Enter edit · P profile · N new · F7 rules"
+    } else if app.tab == AI_TAB {
         "N Ask · R Review · Y Approve · D Reject · ↑↓ scroll · ←→ views · ? help"
     } else if app.tab == 4 {
         if app.post_focus == PostFocus::Stages {
@@ -375,6 +394,7 @@ fn welcome(f: &mut Frame, app: &mut App, area: Rect) {
         app,
         rows[1],
         &[
+            ("Program rules", Hit::Tab(RULES_TAB)),
             ("Create campaign", Hit::Action(Action::Init)),
             ("Import warband", Hit::Action(Action::Import)),
             ("Choose warband", Hit::Action(Action::Switch)),
@@ -785,6 +805,9 @@ pub(super) fn unit_details(db: &Db, u: &Unit, battle: Option<&str>) -> String {
             &advances
         }
     );
+    if !t.description.is_empty() {
+        s.push_str(&format!("Rules: {}\n", t.description));
+    }
     for m in ms {
         let p = battle.and_then(|bid| {
             db.participants
